@@ -1,0 +1,12 @@
+target
+.java-version
+*~
+*.iml
+.idea
+.project
+.classpath
+.settings
+.vscode
+.DS_Store
+*.swp
+*.swo
