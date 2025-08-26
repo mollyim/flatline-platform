@@ -1,0 +1,20 @@
+{{- $componentName := "tus" -}}
+
+{{- $ctx := dict
+    "Release"          .Release
+    "Chart"            .Chart
+    "Values"           .Values
+    "Capabilities"     .Capabilities
+    "Files"            .Files
+    "Template"         .Template
+    "componentName"    $componentName
+    "componentValues"  (index .Values $componentName)
+-}}
+
+{{- if $ctx.componentValues.enabled -}}
+
+{{ template "common.deployment" $ctx }}
+---
+{{ template "common.service" $ctx }}
+
+{{- end -}}

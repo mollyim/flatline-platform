@@ -1,0 +1,39 @@
+Thank you for installing {{ title .Chart.Name }}. Your Helm release is named "{{ .Release.Name }}".
+
+Kubernetes resources part of this release will be prefixed with "{{ include "common.fullname" .}}".
+
+---
+
+🚧 WARNING 🚧
+
+The Flatline project is a work in progress.
+
+This chart and its resources are unstable in order to facilitate development.
+
+During development, several features will be disabled or insecurely implemented.
+
+Do not run this in production environments.
+
+---
+
+Please, wait for the Whisper service to become ready. You can monitor this with the following command:
+
+$ kubectl wait --timeout=5m -n {{ .Release.Namespace }} deployment/{{ include "common.fullname" .}}-whisper-service --for=condition=Available
+
+{{ if .Values.traefikResources.enabled -}}
+Since you have chosen to use the development Traefik resources, you can find the relevant Flatline endpoints here:
+
+- Whisper Service: https://{{ .Values.traefikResources.hostname}}/whisper/
+- Whisper Service Admin: https://{{ .Values.traefikResources.hostname}}/whisper/admin/
+- Storage Service: https://{{ .Values.traefikResources.hostname}}/storage/
+- Storage Service Admin: https://{{ .Values.traefikResources.hostname}}/storage/admin
+- Contact Discovery Service: https://{{ .Values.traefikResources.hostname}}/cds/
+{{ else -}}
+Since you have chosen to use your own ingress gateway, ensure that the relevant Flatline endpoints are exposed:
+
+- Whisper Service on its default port.
+- Storage Service on its default port.
+- Contact Discovery Service on its default port.
+
+These endpoints need to be reachable through TLS by the client applications.
+{{ end -}}

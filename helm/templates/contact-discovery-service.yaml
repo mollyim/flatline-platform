@@ -1,0 +1,21 @@
+{{- $componentName := "contact-discovery-service" -}}
+{{- $componentValues := .Values.contactDiscoveryService -}}
+
+{{- $ctx := dict
+    "Release"          .Release
+    "Chart"            .Chart
+    "Values"           .Values
+    "Capabilities"     .Capabilities
+    "Files"            .Files
+    "Template"         .Template
+    "componentName"    $componentName
+    "componentValues"  $componentValues
+-}}
+
+{{- if $ctx.componentValues.enabled -}}
+
+{{ template "common.deployment" $ctx }}
+---
+{{ template "common.service" $ctx }}
+
+{{- end -}}
