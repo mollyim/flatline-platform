@@ -1,0 +1,9 @@
+dependencies:
+- name: opentelemetry-collector
+  repository: https://open-telemetry.github.io/opentelemetry-helm-charts
+  version: 0.130.2
+- name: redis-cluster
+  repository: https://charts.bitnami.com/bitnami
+  version: 13.0.2
+digest: sha256:01b062feb7c90ace3c8efb1d6dc35c1131c6dfe588af7a491313f260c2610f78
+generated: "2025-08-21T12:21:40.388610435+02:00"

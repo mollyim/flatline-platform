@@ -1,0 +1,25 @@
+{{- $componentName := "localstack" -}}
+{{- $componentValues := .Values.localstack -}}
+
+{{- $ctx := dict
+    "Release"          .Release
+    "Chart"            .Chart
+    "Values"           .Values
+    "Capabilities"     .Capabilities
+    "Files"            .Files
+    "Template"         .Template
+    "componentName"    $componentName
+    "componentValues"  $componentValues
+-}}
+
+{{- if $ctx.componentValues.enabled -}}
+
+{{ template "common.deployment" $ctx }}
+---
+{{ template "common.service" $ctx }}
+---
+{{ template "common.volume" $ctx }}
+---
+{{ template "common.configMapFiles" $ctx }}
+
+{{- end -}}

@@ -1,0 +1,2 @@
+captcha:
+  scoreFloor: 0.0 # FLT(uoemai): Never challenge during development.

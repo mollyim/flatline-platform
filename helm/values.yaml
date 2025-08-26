@@ -1,0 +1,460 @@
+# global defines shared values for this chart and its dependencies.
+global:
+  defaultStorageClass: ""
+# common defines shared values for this chart.
+common:
+  # waitForComponentsInitContainer defines the container that will be used to wait for other components.
+  waitForComponentsInitContainer:
+    image:
+      repository: docker.io/library/busybox
+      tag: 1.36.1
+      pullPolicy: IfNotPresent
+# whisperService defines the values for the Whisper Service component.
+whisperService:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-whisper-service
+    tag: main
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 8080
+        protocol: TCP
+      admin:
+        port: 8081
+        protocol: TCP
+  # env defines the environment variables passed to the container.
+  # In this chart, environment variable values are treated as Helm templates.
+  env:
+    - name: AWS_REGION
+      value: us-east-1
+    - name: AWS_ACCESS_KEY_ID
+      value: test
+    - name: AWS_SECRET_ACCESS_KEY
+      value: test
+    - name: AWS_ENDPOINT_OVERRIDE
+      value: "http://{{ include \"common.fullname\" . }}-localstack:4566"
+    - name: SIGNAL_DISABLE_LOGSTASH_TCP_SOCKET_APPENDER
+      value: "1"
+  # configMapFiles defines a map of data to be mounted as files in the component container.
+  # The contents of plaintext data files are treated as Helm templates.
+  # Some sample files files are bundled with the chart. These files are intended for development use only.
+  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Example: helm install dev . --set-file whisperService.configMapFiles.data.configuration=./custom.yml
+  configMapFiles:
+    data:
+      configuration: "{{ tpl (.Files.Get \"files/whisper-service/dev.yml\") . }}"
+      secrets-bundle: "{{ tpl (.Files.Get \"files/whisper-service/sample-secrets-bundle.yml\") . }}"
+    binaryData:
+      noise-tunnel-keystore: "{{ .Files.Get \"files/whisper-service/noise-tunnel-keystore.p12\" | b64enc }}"
+  volumeMounts:
+    - name: config
+      readOnly: true
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        items:
+          - key: configuration 
+            path: configuration
+            mountPath: /usr/share/signal/dev.yml
+            readOnly: true
+          - key: secrets-bundle
+            path: secrets-bundle
+            mountPath: /usr/share/signal/sample-secrets-bundle.yml
+            readOnly: true
+          - key: noise-tunnel-keystore
+            path: noise-tunnel-keystore
+            mountPath: /usr/share/signal/noise-tunnel-keystore.p12
+            readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .Values.whisperService.service.ports.default.port }}"
+  # waitForCompoenents defines the a map of component services to wait for during pod initialization.
+  # Both the host and the port for each container are treated as Helm templates.
+  waitForComponents:
+    localstack:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-localstack"
+      port: "{{ .Values.localstack.service.ports.default.port }}"
+    cbtemulator:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-cbtemulator"
+      port: "{{ .Values.cbtemulator.service.ports.default.port }}"
+    tus:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-tus"
+      port: "{{ .Values.tus.service.ports.default.port }}"
+    redisCluster:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-redis-cluster"
+      port: "{{ .Values.redisCluster.service.ports.redis }}"
+    opentelemetryCollector:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-opentelemetry-collector"
+      port: "{{ regexReplaceAll \".*:([0-9]+)$\" .Values.opentelemetryCollector.config.receivers.otlp.protocols.http.endpoint \"$1\" }}"
+    registrationService:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-registration-service"
+      port: "{{ .Values.registrationService.service.ports.default.port }}"
+# storageService defines the values for the Storage Service component.
+storageService:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-storage-service
+    tag: main
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 10080
+        protocol: TCP
+      admin:
+        port: 10081
+        protocol: TCP
+  # env defines the environment variables passed to the container.
+  # In this chart, environment variable values are treated as Helm templates.
+  env:
+    - name: AWS_REGION
+      value: us-east-1
+    - name: HTTP_HOST
+      value: "0.0.0.0"
+    - name: HTTP_PORT
+      value: "{{ .Values.storageService.service.ports.default.port }}"
+    - name: ADMIN_HOST
+      value: "0.0.0.0"
+    - name: ADMIN_HTTP_PORT
+      value: "{{ .Values.storageService.service.ports.admin.port }}"
+    - name: BIGTABLE_EMULATOR_HOST
+      value: "{{ include \"common.fullname\" . }}-cbtemulator:{{ .Values.cbtemulator.service.ports.default.port }}"
+  # configMapFiles defines a map of data to be mounted as files in the component container.
+  # The contents of plaintext data files are treated as Helm templates.
+  # Some sample files files are bundled with the chart. These files are intended for development use only.
+  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Example: helm install dev . --set-file storageService.configMapFiles.data.configuration=./custom.yml
+  configMapFiles:
+    data:
+      configuration: "{{ tpl (.Files.Get \"files/storage-service/dev.yml\") . }}"
+  volumeMounts:
+    - name: config
+      readOnly: false
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        items:
+          - key: configuration 
+            path: configuration
+            mountPath: /usr/share/signal/dev.yml
+            readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
+  # waitForCompoenents defines the a map of component services to wait for during pod initialization.
+  # Both the host and the port for each container are treated as Helm templates.
+  waitForComponents:
+    cbtemulator:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-cbtemulator"
+      port: "{{ .Values.cbtemulator.service.ports.default.port }}"
+# registrationService defines the values for the Registration Service component.
+registrationService:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-registration-service
+    tag: main
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 50051
+        protocol: TCP
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
+# contactDiscoveryService defines the values for the Contact Discovery Service component.
+contactDiscoveryService:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-contact-discovery-service
+    tag: main
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 8080
+        protocol: TCP
+  # env defines the environment variables passed to the container.
+  # In this chart, environment variable values are treated as Helm templates.
+  env:
+    - name: _JAVA_OPTIONS
+      value: -Dmicronaut.environments=dev
+    - name: SGX_MODE
+      value: SIM # Run SGX in simulation mode.
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
+# localstack defines the creation and bootstrapping of an environment emulating Amazon Web Services.
+# Disable this component to use AWS or another compatible solution.
+localstack:
+  enabled: true
+  image:
+    repository: docker.io/localstack/localstack
+    tag: 4.6.0
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 4566
+        protocol: TCP
+  replicaCount: 1
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 60
+    exec:
+      command:
+        - sh
+        - -c
+        - "curl -s localhost:{{ .componentValues.service.ports.default.port }}/_localstack/init/ready | grep '\"completed\": true'"
+  # env defines the environment variables passed to the container.
+  # In this chart, environment variable values are treated as Helm templates.
+  env:
+    - name: DISABLE_EVENTS
+      value: "1"
+    - name: LS_LOG
+      value: info
+  persistence:
+    # storageClassName defines the storage class that will be used by the created persistent volume. Optional.
+    # When not set, the global "defaultStorageClass" will be used.
+    storageClassName: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+  # configMapFiles defines a map of data to be mounted as files in the component container.
+  # The contents of plaintext data files are treated as Helm templates.
+  # Some sample files files are bundled with the chart. These files are intended for development use only.
+  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Example: helm install dev . --set-file localstack.configMapFiles.data.whisper-service-dynamic-configuration=./custom.yaml
+  configMapFiles:
+    data:
+      whisper-service-dynamic-configuration: "{{ tpl (.Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\") . }}"
+      whisper-service-cloudformation: "{{ tpl (.Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\") . }}"
+      whisper-service-init-script: "{{ tpl (.Files.Get \"files/localstack/whisper-service-init.sh\") . }}"
+  volumeMounts:
+    - name: config
+      readOnly: false
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        defaultMode: "0755"
+        items:
+          - key: whisper-service-dynamic-configuration
+            path: whisper-service-dynamic-configuration
+            mountPath: /opt/whisper-service-dynamic-config-dev.yaml
+            readOnly: true
+          - key: whisper-service-cloudformation
+            path: whisper-service-cloudformation
+            mountPath: /opt/whisper-service-aws-cloudformation.yaml
+            readOnly: true
+          - key: whisper-service-init-script
+            path: whisper-service-init-script
+            mountPath: /etc/localstack/init/ready.d/whisper-service-init.sh
+            readOnly: true
+    - name: data
+      mountPath: /var/lib/localstack
+      readOnly: false
+      persistentVolumeClaim:
+        claimName: "{{ include \"common.fullnameWithComponent\" . }}"
+# cbtemulator defines the creation of an environment emulating Google Cloud Bigtable.
+# Bigtable is required by the Storage Service component.
+# Disable this component to use Bigtable on GCP or another compatible solution.
+cbtemulator:
+  enabled: true
+  image:
+    repository: docker.io/fullstorydev/cbtemulator
+    tag: v1.0.0
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 9000
+        protocol: TCP
+  replicaCount: 1
+  container:
+    command: cbtemulator
+    # args defines the arguments passed to the entrypoint command.
+    # Each argument is treated as Helm templates.
+    args:
+      - -host
+      - 0.0.0.0
+      - -port
+      - "{{ .componentValues.service.ports.default.port }}"
+      - -dir
+      - /var/bigtable
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 5
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
+  persistence:
+    # storageClassName defines the storage class that will be used by the created persistent volume. Optional.
+    # When not set, the global "defaultStorageClass" will be used.
+    storageClassName: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+  volumeMounts:
+    - name: data
+      mountPath: /var/bigtable
+      readOnly: false
+      persistentVolumeClaim:
+        claimName: "{{ include \"common.fullnameWithComponent\" . }}"
+# tus defines the values for the TUS component for resumable file uploads.
+# TUS is required by the Whisper Service component.
+# Disable this component to use an alternative TUS implementation.
+tus:
+  enabled: true
+  image:
+    repository: ghcr.io/tus/tusd
+    tag: v2.8.0
+    pullPolicy: IfNotPresent
+  replicaCount: 1
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 8080
+        protocol: TCP
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
+# opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
+# Disable this component to use an existing OpenTelemtry Collector.
+opentelemetryCollector:
+  enabled: true
+  nameOverride: "flatline-opentelemetry-collector"
+  mode: deployment
+  image:
+    repository: docker.io/otel/opentelemetry-collector-contrib
+  config:
+    receivers:
+      statsd:
+        endpoint: 0.0.0.0:8125
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    exporters:
+      prometheus:
+        endpoint: 0.0.0.0:8889
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+    service:
+      extensions: [health_check]
+      pipelines:
+        metrics:
+          receivers: [otlp, statsd]
+          processors: [batch]
+          exporters:
+            - prometheus # Use "debug" for terminal output.
+# redisCluster defines the values for Bitnami's Redis Cluster chart.
+# An existing Redis cluster is required by the Whisper Service component.
+# Disable this component to use an existing Redis cluster.
+redisCluster:
+  enabled: true
+  nameOverride: "flatline-redis-cluster"
+  usePassword: false
+# traefikResources defines the values to create Traefik resources for TLS termination and HTTP routing.
+# These resources assume that both the Traefik and Traefik CRDs charts are installed in the cluster.
+# In the "k3s" distribution, both charts are installed by default.
+# This setup is intended for a self-contained local environment.
+# Disable this component to use a different ingress gateway.
+traefikResources:
+  enabled: true
+  # hostname configures the DNS name that will be used to access Flatline. Required.
+  hostname: localhost
+  # chart references the existing Traefik chart. Optional.
+  chart:
+    # name references the name of the Traefik chart that is installed. Optional.
+    name: traefik
+    # namespace references the namespace where the Traefik chart is installed. Optional.
+    # In the "k3s" distribution, the chart is pre-installed in the "kube-system" namespace.
+    namespace: kube-system
+    # valuesOverride can be used to override values from an existing Traefik chart managed by Helm. Optional.
+    # This is done with the creation of a HelmChartConfig, which must be supported by your Kubernetes distribution.
+    # In the "k3s" distribution, HelmChartConfig is the recommended way of customizing the bundled Traefik.
+    valuesOverride:
+      global:
+        sendAnonymousUsage: false
+  # tls configures how Traefik will terminate TLS connections to Flatline. Required.
+  tls:
+    # secretName can be used to reference an existing Kubernetes secret with "tls.crt" and "tls.key" items.
+    # This is recommended over including the private key in the chart values.
+    # When not set, the "crt" and "key" values are used. Required if "crt" and "key" are not set.
+    secretName: ""
+    # crt defines the public certificate encoded in base64.
+    # Do not use the provided example for production environments. Required if "secretName" is not set.
+    # TODO(uoemai): This value must be required from the user for this chart to be production ready.
+    crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDRENDQWZDZ0F3SUJBZ0lVZm01cTh0TDdJb3c0eFlhNWlEemI3dTYrQUpzd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0ZURVRNQkVHQTFVRUF3d0tVMlZzWmxOcFoyNWxaREFlRncweU1URXhNRGd5TURRM01qWmFGdzB6TVRFeApNRFl5TURRM01qWmFNQlF4RWpBUUJnTlZCQU1NQ1d4dlkyRnNhRzl6ZERDQ0FTSXdEUVlKS29aSWh2Y05BUUVCCkJRQURnZ0VQQURDQ0FRb0NnZ0VCQU5qSnhYU09rTzVOUDNqRzJ2THpyVnhnUVhFdTVSSTRqTVNMKzZJQjU3MEQKMHNxU1RLUzJsQ21MaDZWVmw5Wi9ta0JQa2ZwbFI1Rjl1WjdIdnR6ZHE5bTIxWXhlbmJMaTRPa1lVb0ZPN2NKbwpNUW9xV05sTUpDWDF3T3Q1YklGa3ozaXZsaHBTclJxZndVRVJKRkRyZ255VlY4S1hWNjg3Z0Jhd1pPNnFFNDlXCmtFaG8wa3o4NWt2eWpEdWI1S2I1VWwyb2M4eXNMZjNOc2o1TG9VdlpXSWZRL0VmRG9sd1pZSVJFNWhXbmxncDMKcTJRTEV0WXJvTGcyVnIyUSs1ZTIwNTFrK0JWd2VEcnhNT0FYVVpJQ3hibmszbGRQZWh6dmpDci9XOXJZdm1MSQpjNDErWUZEbGhVZUt3VEZrVDQ4WHBGck9xd3UwZ2dvcFpVamY0NnArYmdNQ0F3RUFBYU5STUU4d0h3WURWUjBqCkJCZ3dGb0FVWjFVbUZYcG9NaUhjZ2Q3elAraDdUdWFpdW1rd0NRWURWUjBUQkFJd0FEQUxCZ05WSFE4RUJBTUMKQmVBd0ZBWURWUjBSQkEwd0M0SUpiRzlqWVd4b2IzTjBNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUNXekllMgp5amd0MWVQbU9CUTVGdmxDZmxZcVpMZlY2RWdsYUovb2Y5TCsxby8wOGtjakZZVzlvYTVCeHBkOE8vYUVkdXpGCmJ5YlRLcmRtajd5WkplUE5XR0p5WjcvOHlQYjRxV2lVZGY1b003eWNJZ04xd3ZWN3o4Mk1Fc0ora0MyU0ZKRUwKeWlabUVTa1VxdEV3b0k2UXhLTjdFRXZxeXpDRzZWalBqTXJ6VFhOYUdRMWJhM3pNUFFubE5Xbkh1WW1YN2NnSQpKNWxVa3ZIRzBJMzJlbGFsd3BsaGFGaThqTmdSOHU0WXlxMDQ3UmpMWldDY0tmYStLRmx2WENZSTltajZqMmtWCjM1azlHUnd5S0kxemhyNGdWNiswWGwwajE5SlpjbEhSdDZkOCt5MDBiQzNXRHh1OW8rTTVmVGZZSGs1WHFQRHIKL1dWZW5NNERNaTBzS0ZUcgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+    # key defines the certificate private key encoded in base64. Required if "secretName" is not set.
+    # Do not use the provided example for production environments.
+    # TODO(uoemai): This value must be required by the user for this chart to be production ready.
+    # TODO(uoemai): This value must be encrypted for this chart to be production ready.
+    key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRFl5Y1YwanBEdVRUOTQKeHRyeTg2MWNZRUZ4THVVU09JekVpL3VpQWVlOUE5TEtra3lrdHBRcGk0ZWxWWmZXZjVwQVQ1SDZaVWVSZmJtZQp4NzdjM2F2WnR0V01YcDJ5NHVEcEdGS0JUdTNDYURFS0tsalpUQ1FsOWNEcmVXeUJaTTk0cjVZYVVxMGFuOEZCCkVTUlE2NEo4bFZmQ2wxZXZPNEFXc0dUdXFoT1BWcEJJYU5KTS9PWkw4b3c3bStTbStWSmRxSFBNckMzOXpiSSsKUzZGTDJWaUgwUHhIdzZKY0dXQ0VST1lWcDVZS2Q2dGtDeExXSzZDNE5sYTlrUHVYdHRPZFpQZ1ZjSGc2OFREZwpGMUdTQXNXNTVONVhUM29jNzR3cS8xdmEyTDVpeUhPTmZtQlE1WVZIaXNFeFpFK1BGNlJhenFzTHRJSUtLV1ZJCjMrT3FmbTREQWdNQkFBRUNnZ0VBRHE0ck51ZG9uUnFTRDhXM2tmZzZaeVVGaVhxWmZKQmp4L09LeUwvRVI2SjQKcGNzZWNaRURtNFNkWE83YzUyT2d1SFlxOW4vaFJ0THl2UFBkMHVzWDloaFJnYjN1Zyt5bE9tT3hRcHhyc1Z5SQo1WjFVZ3ZLTENCOEtQMmZybHgrU2hTT3UwSDJFeDJiR0dYZmxzNjBmR3Z5cUFyMW83SzdrejZTR1VUc25NKytTCnltakNMclNvcW5paktFdml2Wk1VMXduaDhqajg0ZjBvYnE3L3hqNTVYZWhteDRhYWJKMW1icHlIaUNCRGZIWXcKQTBjOWdVOHl5bDg0TDNzdE9hR1NCRUEwZ0ZvMzdDYkgxaU00MnRKNDlPZVRBZUFqNWRNbFlZT054WndhellaVgpPUVJhS1lXWE9ZbW53cHBMei8rMU0yYjZObUhHdXc0ZzhwcElkZytVUVFLQmdRRDF3Z0N3NGpPdUlTNys2TVlGClhaNjVYSGlKdUtITElNVlF3Rm9XVUNHYUwyRWcvNkJSelJHb0ZFblN0Y2lGM0FLQ2k5UUNUbUQxQXNEUHdsaVgKSVUzUk0xczNtODM4ZUpOSU4vbGFEOVlFSkMzWVpnOWxwWllPajNsUXkzUGZRd2FkTDU5MVlTMC9lUnBORzE1SgpLbU5BNGpscEZaK2tHZEw4Nlk2bzdCWmk4d0tCZ1FEaDByREhIWTZJb05NbDVvK053TVR4UVBHUEthejlnN3h4CjRoMTRydnZ5c3o2T0d2TVlFdWUwRFlSYXY4RGIvbDVLR2ViMFdWK2FxTVNqRnkwTHN0RVhUbFpQOWJwMnh2RGoKTG5WNUxjUEk0NDZtVmF0RTdDZ0xQWStMWlpTY0hmWU9QZkJGS1MvZGtJMDRiUjlodjB1dVpVNXh3cURiMEhKVAprR1NNd0FUc3NRS0JnUURhVU9SaVBpQWc0Uk9wbVVsSVBQbWl1dFhOcW5uNFEvMWxGZXN4aFMvRWs3QmFLeHZWCmJ6SHZPVTYzWTR0bDlxTTRLMVZFVXpKb2xYQ0pYNkZwYUVtRHZYYWIrTW5OTGFQUTlRQ0xGQ1JQKzMvS2pDZkQKYVl6YkZITjE1YmJpcjkweFI3d0Uvelc5L0N2ME1Zclp2bEQ3czd2Q2NWWW01bFg3SE5RQmxmRHhKd0tCZ0V3cApPZE85eFMrUlJnVTNVRjBYa1pSb09jLzExMUVkRi9ZMHM0bmJRai9sY2dpTlVFVmpRdC8zMnhhY0sxaEczdGdSCkNsS0l2ZlMwVExWUWdMRzhXa2FJOWhVN28rcWhSK2JtNlZtNE5KclJISEErM21kOVdqZ0lTQnhVWXgyUUFVZG0KWGwyRStZNjVUTmVsL2ZxQ2dPek5YL3FBRUs1eUM4emhHdmhaWG8vUkFvR0FacXdscSt1cnBUc0drMkZBSTE0ego2bW5TN3huMyt6eVFqNjBFRGplanVZbHcxeHpEZnlkU0VEU3NMVXc2WFZDL1h5RTVRTkduSDFDWER1eGoycTh3CkFzYmtNSzc2NXl4bFFBTm8rWkl3Q1JtNGk3N2h5QXJhNHdkdG8vb3A4Y25abVE2d1NpK2xnUXhRUWlUb0pjcG8KNXNVTnRNVXRWYUNIbkFIV2UyVGVHbVk9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
+    # optionsName can be used to reference existing options to use for TLS termination. Optional.
+    # When not set, Traefik defaults are used.
+    optionsName: ""

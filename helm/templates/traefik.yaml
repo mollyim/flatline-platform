@@ -1,0 +1,114 @@
+{{- $componentName := "traefik" -}}
+{{- $componentValues := .Values.traefikResources -}}
+
+{{- $ctx := dict
+    "Release"          .Release
+    "Chart"            .Chart
+    "Values"           .Values
+    "Capabilities"     .Capabilities
+    "Files"            .Files
+    "Template"         .Template
+    "componentName"    $componentName
+    "componentValues"  $componentValues
+-}}
+
+{{- if $ctx.componentValues.enabled -}}
+
+{{- if $ctx.componentValues.tls.secretName }}
+{{- else }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "common.fullnameWithComponent" $ctx }}-tls
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $ctx.componentValues.tls.crt }}
+  tls.key: {{ $ctx.componentValues.tls.key }}
+{{- end }}
+
+---
+
+{{- $hostname := (required "A valid hostname must be provided for Traefik!" $ctx.componentValues.hostname) -}}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: {{ include "common.fullnameWithComponent" $ctx }}-default
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`{{ $hostname }}`) && PathPrefix(`/whisper/`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-whisper-service
+          port: {{ .Values.whisperService.service.ports.default.port }}
+      middlewares:
+        - name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
+    - match: Host(`{{ $hostname }}`) && PathPrefix(`/whisper/admin/`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-whisper-service
+          port: {{ .Values.whisperService.service.ports.admin.port }}
+      middlewares:
+        - name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
+    - match: Host(`{{ $hostname }}`) && PathPrefix(`/storage/`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-storage-service
+          port: {{ .Values.storageService.service.ports.default.port }}
+      middlewares:
+        - name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
+    - match: Host(`{{ $hostname }}`) && PathPrefix(`/storage/admin/`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-storage-service
+          port: {{ .Values.storageService.service.ports.admin.port }}
+      middlewares:
+        - name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
+    - match: Host(`{{ $hostname }}`) && PathPrefix(`/cds/`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-contact-discovery-service
+          port: {{ .Values.contactDiscoveryService.service.ports.default.port }}
+      middlewares:
+        - name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
+  tls:
+    secretName: {{ $ctx.componentValues.tls.secretName | default (printf "%s-tls" (include "common.fullnameWithComponent" $ctx)) }}
+    options:
+      {{- if $ctx.componentValues.tls.optionsName }}
+      name: {{ $ctx.componentValues.tls.optionsName }}
+      {{- end }}
+
+---
+
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
+spec:
+  stripPrefix:
+    prefixes:
+      - /whisper/admin/
+      - /whisper/
+      - /storage/admin/
+      - /storage/
+      - /cds/
+
+---
+
+{{- if $ctx.componentValues.chart.valuesOverride }}
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: {{ $ctx.componentValues.chart.name | default "traefik" }}
+  namespace: {{ $ctx.componentValues.chart.namespace | default "kube-system" }}
+spec:
+  valuesContent: |-
+    {{- toYaml $ctx.componentValues.chart.valuesOverride | nindent 4 }}
+{{- end }}
+
+{{- end }}

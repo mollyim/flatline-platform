@@ -1,0 +1,398 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Flatline Server Infrastructure 
+
+Resources:
+  WhisperServiceDynamicConfigBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: whisper-service-dynamic-config
+  
+  WhisperServicePreKeyStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: whisper-service-pre-key-store
+
+  AccountsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: UL
+          AttributeType: B
+        - AttributeName: PNI
+          AttributeType: B
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: ul_to_u
+          KeySchema:
+            - AttributeName: UL
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: pni_to_u
+          KeySchema:
+            - AttributeName: PNI
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  AccountsPhoneNumbersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts_PhoneNumbers
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: P
+          AttributeType: S
+      KeySchema:
+        - AttributeName: P
+          KeyType: HASH
+
+  AccountsPhoneNumberIdentifiersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts_PhoneNumberIdentifiers
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: PNI
+          AttributeType: B
+      KeySchema:
+        - AttributeName: PNI
+          KeyType: HASH
+
+  AccountsUsedLinkDeviceTokensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts_UsedLinkDeviceTokens
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: H
+          AttributeType: B
+      KeySchema:
+        - AttributeName: H
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  AccountsUsernamesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts_Usernames
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: N
+          AttributeType: B
+      KeySchema:
+        - AttributeName: N
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: TTL
+        Enabled: true
+
+  ClientReleasesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ClientReleases
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: P
+          AttributeType: S
+        - AttributeName: V
+          AttributeType: S
+      KeySchema:
+        - AttributeName: P
+          KeyType: HASH
+        - AttributeName: V
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  DeletedAccountsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: DeletedAccounts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: P
+          AttributeType: S
+        - AttributeName: U
+          AttributeType: B
+      KeySchema:
+        - AttributeName: P
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+      GlobalSecondaryIndexes:
+        - IndexName: u_to_p
+          KeySchema:
+            - AttributeName: U
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  DeletedAccountsLockTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: DeletedAccountsLock
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: P
+          AttributeType: S
+      KeySchema:
+        - AttributeName: P
+          KeyType: HASH
+
+  IssuedReceiptsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: IssuedReceipts
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: A
+          AttributeType: S
+      KeySchema:
+        - AttributeName: A
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  KeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Keys
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: DK
+          AttributeType: B
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: DK
+          KeyType: RANGE
+
+  ECSignedPreKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: EC_Signed_Pre_Keys
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: D
+          AttributeType: N
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: D
+          KeyType: RANGE
+
+  PQKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PQ_Keys
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: DK
+          AttributeType: B
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: DK
+          KeyType: RANGE
+
+  PQPagedKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PQ_Paged_Keys
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: D
+          AttributeType: N
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: D
+          KeyType: RANGE
+
+  PQLastResortKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PQ_Last_Resort_Keys
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: D
+          AttributeType: N
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: D
+          KeyType: RANGE
+
+  MessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Messages
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: H
+          AttributeType: B
+        - AttributeName: S
+          AttributeType: B
+        - AttributeName: U
+          AttributeType: B
+      KeySchema:
+        - AttributeName: H
+          KeyType: HASH
+        - AttributeName: S
+          KeyType: RANGE
+      LocalSecondaryIndexes:
+        - IndexName: Message_UUID_Index
+          KeySchema:
+            - AttributeName: H
+              KeyType: HASH
+            - AttributeName: U
+              KeyType: RANGE
+          Projection:
+            ProjectionType: KEYS_ONLY
+
+  PhoneNumberIdentifiersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PhoneNumberIdentifiers
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: P
+          AttributeType: S
+        - AttributeName: PNI
+          AttributeType: B
+      KeySchema:
+        - AttributeName: P
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: pni_to_p
+          KeySchema:
+            - AttributeName: PNI
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  ProfilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Profiles
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: V
+          AttributeType: S
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: V
+          KeyType: RANGE
+
+  PushChallengesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: PushChallenges
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: T
+        Enabled: true
+
+  RegistrationRecoveryTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: RegistrationRecovery
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: P
+          AttributeType: S
+      KeySchema:
+        - AttributeName: P
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  RemoteConfigTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: RemoteConfig
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: N
+          AttributeType: S
+      KeySchema:
+        - AttributeName: N
+          KeyType: HASH
+
+  ReportMessagesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ReportMessages
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: H
+          AttributeType: B
+      KeySchema:
+        - AttributeName: H
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  ClientPublicKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: ClientPublicKeys
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: U
+          AttributeType: B
+        - AttributeName: D
+          AttributeType: N
+      KeySchema:
+        - AttributeName: U
+          KeyType: HASH
+        - AttributeName: D
+          KeyType: RANGE
+
+  VerificationSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VerificationSessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: K
+          AttributeType: S
+      KeySchema:
+        - AttributeName: K
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true

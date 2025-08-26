@@ -1,0 +1,15 @@
+apiVersion: v2
+name: flatline
+version: 0.0.0
+
+dependencies:
+  - name: opentelemetry-collector
+    version: "0.130.2"
+    repository: "https://open-telemetry.github.io/opentelemetry-helm-charts"
+    alias: opentelemetryCollector
+    condition: opentelemetryCollector.enabled
+  - name: redis-cluster
+    version: "13.0.2"
+    repository: "https://charts.bitnami.com/bitnami"
+    alias: redisCluster
+    condition: redisCluster.enabled
