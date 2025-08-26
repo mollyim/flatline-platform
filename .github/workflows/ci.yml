@@ -1,0 +1,186 @@
+name: Continuous Integration
+
+on:
+  workflow_dispatch:
+# pull_request:
+# push:
+#   branches:
+#     - main
+
+env:
+  DEFAULT_BRANCH: main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  whisper-service:
+    name: Whisper Service
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-whisper-service 
+    services:
+      foundationdb:
+        # Should be the same as the client version or close behind.
+        image: foundationdb/foundationdb:7.3.62
+        options: --name foundationdb
+    steps:
+      - &checkout-sources
+        name: Checkout Sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: recursive
+      - &set-up-jdk-21
+        name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+          cache: 'maven'
+        env:
+          # Work around incorrect HOME in container runners.
+          # Source: https://github.com/actions/setup-java/issues/356
+          HOME: /root
+      - name: Install Docker
+        run: |
+          apt update
+          apt install -y ca-certificates curl
+          install -m 0755 -d /etc/apt/keyrings
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+          chmod a+r /etc/apt/keyrings/docker.asc
+          echo \
+            "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+            $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}") stable" | \
+            tee /etc/apt/sources.list.d/docker.list > /dev/null
+          apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+      - name: Configure FoundationDB
+        run: docker exec foundationdb /usr/bin/fdbcli --exec "configure new single memory"
+      - name: Download FoundationDB Client
+        run: |
+          ./mvnw -e -B \
+            clean prepare-package \
+            -Pexclude-spam-filter \
+            -DskipTests=true
+          cp service/target/jib-extra/usr/lib/libfdb_c.x86_64.so /usr/lib/libfdb_c.x86_64.so
+          ldconfig
+      - name: Test
+        # Tests for features disabled in the Flatline prototype are excluded.
+        run: |
+          ./mvnw -e -B \
+            clean verify \
+            -DfoundationDb.serviceContainerName=foundationdb \
+            -pl '!integration-tests' \
+            -Dsurefire.failIfNoSpecifiedTests=false \
+            -Dtest=\!org.whispersystems.textsecuregcm.controllers.VerificationControllerTest,\!org.whispersystems.textsecuregcm.controllers.SubscriptionControllerTest,\!org.whispersystems.textsecuregcm.registration.IdentityTokenCallCredentialsTest
+      - &determine-container-image-tag
+        name: Determine Container Image Tag
+        id: tag
+        run: |
+          if [ "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH" ]; then
+            echo "tag=${DEFAULT_BRANCH}" >> $GITHUB_OUTPUT
+            echo "extra-tags=latest" >> $GITHUB_OUTPUT
+          else
+            # Workflow only runs on the default branch and on PR branches.
+            tag="pr-$(echo "$GITHUB_REF_NAME" | cut -d'/' -f1)"
+            echo "tag=$tag" >> $GITHUB_OUTPUT
+            echo "extra-tags=$tag" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GITHUB_REF_NAME: ${{ github.ref_name }}
+          DEFAULT_BRANCH: ${{ env.DEFAULT_BRANCH }}
+      - name: Build Container Image
+        run: |
+          ./mvnw -e -B \
+            deploy \
+            -Pexclude-spam-filter \
+            -Denv=dev \
+            -DskipTests \
+            -Djib.goal=build \
+            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/flatline-whisper-service:${{ steps.tag.outputs.tag }} \
+            -Djib.to.tags=${{ steps.tag.outputs.extra-tags }} \
+            -Djib.to.auth.username=${{ github.token }} \
+            -Djib.to.auth.password=${{ github.token }}
+
+  storage-service:
+    name: Storage Service
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-storage-service 
+    steps:
+      - *checkout-sources
+      - *set-up-jdk-21
+      - *determine-container-image-tag
+      - name: Test & Build Container Image
+        run: |
+          ./mvnw -e -B \
+            clean package \
+            -Pdocker-deploy \
+            -Denv=dev \
+            -Djib.goal=build \
+            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/flatline-storage-service:${{ steps.tag.outputs.tag }} \
+            -Djib.to.tags=${{ steps.tag.outputs.extra-tags }} \
+            -Djib.to.auth.username=${{ github.token }} \
+            -Djib.to.auth.password=${{ github.token }}
+
+  registration-service:
+    name: Registration Service
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-registration-service 
+    steps:
+      - *checkout-sources
+      - *set-up-jdk-21
+      - *determine-container-image-tag
+      - name: Test & Build Container Image
+        run: |
+          ./mvnw -e -B \
+            clean package \
+            -Denv=dev \
+            -Djib.goal=build \
+            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/flatline-registration-service:${{ steps.tag.outputs.tag }} \
+            -Djib.to.tags=${{ steps.tag.outputs.extra-tags }} \
+            -Djib.to.auth.username=${{ github.token }} \
+            -Djib.to.auth.password=${{ github.token }}
+
+  contact-discovery-service:
+    name: Contact Discovery Service
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-contact-discovery-service 
+    steps:
+      - &checkout-sources
+      - name: Set up JDK 21
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+          cache: 'maven'
+      - *determine-container-image-tag
+      - name: Test
+        # Tests for features disabled in the Flatline prototype are excluded.
+        run: |
+          ./mvnw -e -B \
+            verify \
+            -Dtest=\!org.signal.cdsi.enclave.**,\!org.signal.cdsi.IntegrationTest,\!org.signal.cdsi.JsonMapperInjectionIntegrationTest,\!org.signal.cdsi.limits.redis.RedisLeakyBucketRateLimiterIntegrationTest,\!org.signal.cdsi.util.ByteSizeValidatorTest
+      - name: Build Container Image
+        run: |
+          ./mvnw -e -B \
+            deploy \
+            -Dpackaging=docker \
+            -DskipTests \
+            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/flatline-contact-discovery-service:${{ steps.tag.outputs.tag }} \
+            -Djib.to.tags=${{ steps.tag.outputs.extra-tags }} \
+            -Djib.to.auth.username=${{ github.token }} \
+            -Djib.to.auth.password=${{ github.token }}
