@@ -1,12 +1,12 @@
 [submodule "flatline-whisper-service"]
 	path = flatline-whisper-service
-	url = git@github.com:mollyim/flatline-whisper-service.git
+	url = https://github.com/mollyim/flatline-whisper-service.git
 [submodule "flatline-storage-service"]
 	path = flatline-storage-service
-	url = git@github.com:mollyim/flatline-storage-service.git
+	url = https://github.com/mollyim/flatline-storage-service.git
 [submodule "flatline-registration-service"]
 	path = flatline-registration-service
-	url = git@github.com:mollyim/flatline-registration-service.git
+	url = https://github.com/mollyim/flatline-registration-service.git
 [submodule "flatline-contact-discovery-service"]
 	path = flatline-contact-discovery-service
-	url = git@github.com:mollyim/flatline-contact-discovery-service.git
+	url = https://github.com/mollyim/flatline-contact-discovery-service.git
