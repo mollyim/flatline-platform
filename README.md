@@ -156,7 +156,7 @@ As configured for this prototype, the verification code is always the last six d
 #### Contact Discovery Service
 
 ```bash
-cd flatline-registration-service
+cd flatline-contact-discovery-service
 ./mvnw package \
   -Dpackaging=docker -DskipTests \
   -Djib.to.image="flatline-contact-discovery-service:dev"
