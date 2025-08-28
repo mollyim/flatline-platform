@@ -12,7 +12,7 @@ Do not run this in production environments.
 
 It relies on various [components](#components) forked from their original [Signal repositories](https://github.com/signalapp).
 
-This repository holds the [workflows](.github/workflows), [artifacts](https://github.com/orgs/mollyim/packages?repo_name=flatline-platform), [infrastructure](helm/) and documentation for these components.
+This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?repo_name=flatline-platform), [workflows](.github/workflows), [infrastructure](helm/) and documentation for these components.
 
 ## Components
 
@@ -35,13 +35,13 @@ Flatline is composed of multiple services organized under Flatline Platform as s
   - Repository: https://github.com/mollyim/flatline-contact-discovery-service
   - Upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
 
-Additionally, Flatline relies on other infrastructure components which are found in this repository.
+Additionally, Flatline relies on other infrastructure components described in [its Helm chart](helm/).
 
 ## Development
 
 To develop Flatline locally, ensure submodules are initialized and fetched:
 
-```
+```bash
 git clone --recurse-submodules git@github.com:mollyim/flatline-platform.git
 # Alternatively, for an existing repository:
 # git submodule update --init --recursive
@@ -210,7 +210,7 @@ Some common customization options are:
 
 - Overriding the bundled configuration files for the Flatline components.
 - Disabling bundled local cloud service emulators to rely on the actual cloud service providers instead.
-- Disabling bundled infrastructure components (e.g. Traefik-specific resources, Redis Cluster, OpenTelemetry Collector, TUS...) to use existing ones.
+- Disabling bundled infrastructure components (e.g. Traefik-specific resources, Redis cluster, OpenTelemetry Collector, tus...) to use existing ones.
 - Using an existing StorageClass instead of the default [`k3s` local path provisioner](https://docs.k3s.io/storage).
 
 These and other customizations are documented in the [`values.yaml`](helm/values.yaml) file.
