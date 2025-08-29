@@ -18,7 +18,7 @@
 
 ---
 
-{{- $hostname := (required "A valid hostname must be provided for Traefik!" $ctx.componentValues.hostname) -}}
+{{- $hostname := (required "A valid hostname must be provided for Traefik!" $ctx.componentValues.hostname) }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
