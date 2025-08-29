@@ -9,12 +9,11 @@ common:
       repository: docker.io/library/busybox
       tag: 1.36.1
       pullPolicy: IfNotPresent
-##
-## Flatline Components
-## These components are the core of Flatline.
-## Their container images are built by the Flatline project.
-##
-
+#
+#  Flatline Components
+#  These components are the core of Flatline.
+#  Their container images are built by the Flatline project.
+#
 # whisperService defines the values for the Whisper Service component.
 whisperService:
   enabled: true
@@ -48,7 +47,7 @@ whisperService:
   # configMap defines a ConfigMap associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
   # Example: helm install dev . --set-file whisperService.configMap.data.configuration=./custom.yml
   configMap:
     data:
@@ -56,7 +55,7 @@ whisperService:
   # secret defines a Secret associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
   # Example: helm install dev . --set-file whisperService.secret.stringData.secrets-bundle=./custom.yml
   secret:
     data:
@@ -158,7 +157,7 @@ storageService:
   # configMap defines a ConfigMap associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
   # Example: helm install dev . --set-file storageService.configMap.data.configuration=./custom.yml
   configMap:
     data:
@@ -245,14 +244,13 @@ contactDiscoveryService:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
-##
-## Infrastructure Components
-## These components provide functionality that Flatline requires.
-## Their container images are build and distributed by third parties.
-## They are bundled in the chart to provide a functional development environment.
-## They should be replaced with production-ready alternatives when appropriate.
-##
-
+#
+#  Infrastructure Components
+#  These components provide functionality that Flatline requires.
+#  Their container images are build and distributed by third parties.
+#  They are bundled in the chart to provide a functional development environment.
+#  They should be replaced with production-ready alternatives when appropriate.
+#
 # localstack defines the creation and bootstrapping of an environment emulating Amazon Web Services.
 # The DynamoDB and S3 features from AWS are required by the Whisper Service component.
 # Disable this component to use AWS or another compatible solution.
@@ -299,7 +297,7 @@ localstack:
   # configMap defines a ConfigMap associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
   # Example: helm install dev . --set-file localstack.configMap.data.whisper-service-dynamic-configuration=./custom.yaml
   configMap:
     data:
@@ -439,7 +437,7 @@ redisCluster:
   # configMap defines a ConfigMap associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
   # Example: helm install dev . --set-file redisCluster.configMap.data.configuration=./custom.conf
   configMap:
     data:
@@ -544,7 +542,7 @@ traefikResources:
   # secret defines a Secret associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
   # Example: helm install dev . --set-file traefikResources.secret.stringData."tls.key"=./custom.key
   secret:
     type: kubernetes.io/tls
@@ -553,9 +551,9 @@ traefikResources:
       tls.key: "{{ tpl (.Files.Get \"files/traefik/localhost.key\") . }}"
   # tls configures how Traefik will terminate TLS connections to Flatline. Required.
   tls:
-    # secretName can be used to reference an existing Kubernetes secret with "tls.crt" and "tls.key" items.
-    # When not set, the values defined in the "secret" value above are used.
+    # secretName can be used to reference an existing Kubernetes TLS secret with "tls.crt" and "tls.key" items.
+    # When not set, the values defined in the "secret" section above are used.
     secretName: ""
-    # optionsName can be used to reference existing options to use for TLS termination. Optional.
+    # optionsName can be used to reference existing options to use for TLS termination.
     # When not set, Traefik defaults are used.
     optionsName: ""
