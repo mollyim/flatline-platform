@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'helm/**'
-      - '.github/workflows/helm.yml'
+      - 'charts/**'
+      - '.github/workflows/helm-test.yml'
   pull_request:
     paths:
-      - 'helm/**'
-      - '.github/workflows/helm.yml'
+      - 'charts/**'
+      - '.github/workflows/helm-test.yml'
   workflow_dispatch:
 
 jobs:

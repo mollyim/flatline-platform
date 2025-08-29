@@ -5,8 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'helm/**'
-      - '.github/workflows/helm.yml'
+      - 'charts/**'
+      - '.github/workflows/helm-release.yml'
   workflow_dispatch:
 
 jobs:
@@ -26,9 +26,11 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Run chart-releaser
+      - name: Configure Helm Repositories
+        run: |
+          helm repo add opentelemetry-collector https://open-telemetry.github.io/opentelemetry-helm-charts
+
+      - name: Release Chart
         uses: helm/chart-releaser-action@cae68fefc6b5f367a0275617c9f83181ba54714f # v1.7.0
-        with:
-          charts_dir: helm 
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
