@@ -18,6 +18,8 @@
 ---
 {{ template "common.service" $ctx }}
 ---
-{{ template "common.configMapFiles" $ctx }}
+{{ template "common.configMap" $ctx }}
+---
+{{ template "common.secret" $ctx }}
 
 {{- end -}}

@@ -20,6 +20,6 @@
 ---
 {{ template "common.volume" $ctx }}
 ---
-{{ template "common.configMapFiles" $ctx }}
+{{ template "common.configMap" $ctx }}
 
 {{- end -}}

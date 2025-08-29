@@ -14,19 +14,7 @@
 
 {{- if $ctx.componentValues.enabled -}}
 
-{{- if $ctx.componentValues.tls.secretName }}
-{{- else }}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: {{ include "common.fullnameWithComponent" $ctx }}-tls
-  labels:
-    {{- include "common.labels" . | nindent 4 }}
-type: kubernetes.io/tls
-data:
-  tls.crt: {{ $ctx.componentValues.tls.crt }}
-  tls.key: {{ $ctx.componentValues.tls.key }}
-{{- end }}
+{{ template "common.secret" $ctx }}
 
 ---
 
@@ -77,7 +65,7 @@ spec:
       middlewares:
         - name: {{ include "common.fullnameWithComponent" $ctx }}-strip-prefix
   tls:
-    secretName: {{ $ctx.componentValues.tls.secretName | default (printf "%s-tls" (include "common.fullnameWithComponent" $ctx)) }}
+    secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
     options:
       {{- if $ctx.componentValues.tls.optionsName }}
       name: {{ $ctx.componentValues.tls.optionsName }}

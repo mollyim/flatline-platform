@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .componentValues.replicaCount }}
+  replicas: {{ .componentValues.replicas }}
   selector:
     matchLabels:
       {{- include "common.labels" . | nindent 6 }}
@@ -16,8 +16,11 @@ spec:
       labels:
         {{- include "common.labels" . | nindent 8 }}
       annotations:
-        {{- if .componentValues.configMapFiles }}
-        checksum/config: {{ include "common.configMapFilesChecksum" . }}
+        {{- if .componentValues.configMap }}
+        checksum/config: {{ include "common.configMapChecksum" . }}
+        {{- end }}
+        {{- if .componentValues.secret }}
+        checksum/secret: {{ include "common.secretChecksum" . }}
         {{- end }}
     spec:
       containers:
@@ -29,7 +32,7 @@ spec:
           command:
             - {{ quote .componentValues.container.command }}
           {{- if .componentValues.container.args }}
-          args: 
+          args:
             {{- range $arg := .componentValues.container.args }}
             {{- $rendered := tpl $arg $ }}
             - {{ quote $rendered }}
@@ -49,14 +52,23 @@ spec:
             {{- range $vm := .componentValues.volumeMounts }}
             {{- if $vm.configMap }}
             {{- range $vm.configMap.items }}
-            - name: {{ $vm.name }} 
+            - name: {{ $vm.name }}
               mountPath: {{ .mountPath }}
               subPath: {{ .path }}
               {{- if .readOnly }}
               readOnly: true
               {{- end }}
             {{- end }}
-            {{- else }}
+            {{- else if $vm.secret }}
+            {{- range $vm.secret.items }}
+            - name: {{ $vm.name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .path }}
+              {{- if .readOnly }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
+            {{- else if $vm.persistentVolumeClaim }}
             - name: {{ $vm.name }}
               mountPath: {{ $vm.mountPath }}
               {{- if $vm.subPath }}
@@ -68,6 +80,35 @@ spec:
             {{- end }}
             {{- end }}
           {{- end }}
+          env:
+            {{- range .componentValues.env }}
+            - name: {{ .name }}
+              value: {{ quote (tpl .value $) }}
+            {{- end }}
+          {{- if .componentValues.startupProbe }}
+          startupProbe:
+            initialDelaySeconds: {{ .componentValues.startupProbe.initialDelaySeconds }}
+            periodSeconds:       {{ .componentValues.startupProbe.periodSeconds }}
+            timeoutSeconds:      {{ .componentValues.startupProbe.timeoutSeconds }}
+            failureThreshold:    {{ .componentValues.startupProbe.failureThreshold }}
+            {{- if .componentValues.startupProbe.exec }}
+            exec:
+              command:
+                {{- range $arg := .componentValues.startupProbe.exec.command }}
+                {{- $rendered := tpl $arg $ }}
+                - {{ quote $rendered }}
+                {{- end }}
+            {{- else if .componentValues.startupProbe.tcpSocket }}
+            tcpSocket:
+              port: {{ tpl .componentValues.startupProbe.tcpSocket.port . }}
+            {{- else if .componentValues.startupProbe.httpGet }}
+            httpGet:
+              path:   {{ .componentValues.startupProbe.httpGet.path }}
+              port:   {{ tpl .componentValues.startupProbe.httpGet.port . }}
+              scheme: {{ .componentValues.startupProbe.httpGet.scheme }}
+            {{- end }}
+          {{- end }}
+      {{- if .componentValues.volumeMounts }}
       volumes:
         {{- range .componentValues.volumeMounts }}
         - name: {{ .name }}
@@ -76,10 +117,23 @@ spec:
             name: {{ tpl .configMap.name $ }}
             {{- if .configMap.defaultMode }}
             defaultMode: {{ .configMap.defaultMode }}
-            {{- end }} 
+            {{- end }}
             {{- if .configMap.items }}
             items:
               {{- range .configMap.items }}
+              - key: {{ .key }}
+                path: {{ .path }}
+              {{- end }}
+            {{- end }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ tpl .secret.name $ }}
+            {{- if .secret.defaultMode }}
+            defaultMode: {{ .secret.defaultMode }}
+            {{- end }}
+            {{- if .secret.items }}
+            items:
+              {{- range .secret.items }}
               - key: {{ .key }}
                 path: {{ .path }}
               {{- end }}
@@ -89,6 +143,7 @@ spec:
             claimName: {{ tpl .persistentVolumeClaim.claimName $ }}
           {{- end }}
         {{- end }}
+      {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: data

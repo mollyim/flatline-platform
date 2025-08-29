@@ -9,6 +9,11 @@ common:
       repository: docker.io/library/busybox
       tag: 1.36.1
       pullPolicy: IfNotPresent
+#
+#  Flatline Components
+#  These components are the core of Flatline.
+#  Their container images are built by the Flatline project.
+#
 # whisperService defines the values for the Whisper Service component.
 whisperService:
   enabled: true
@@ -16,7 +21,7 @@ whisperService:
     repository: ghcr.io/mollyim/flatline-whisper-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -39,27 +44,39 @@ whisperService:
       value: "http://{{ include \"common.fullname\" . }}-localstack:4566"
     - name: SIGNAL_DISABLE_LOGSTASH_TCP_SOCKET_APPENDER
       value: "1"
-  # configMapFiles defines a map of data to be mounted as files in the component container.
-  # The contents of plaintext data files are treated as Helm templates.
-  # Some sample files files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
-  # Example: helm install dev . --set-file whisperService.configMapFiles.data.configuration=./custom.yml
-  configMapFiles:
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file whisperService.configMap.data.configuration=./custom.yml
+  configMap:
     data:
       configuration: "{{ tpl (.Files.Get \"files/whisper-service/dev.yml\") . }}"
-      secrets-bundle: "{{ tpl (.Files.Get \"files/whisper-service/sample-secrets-bundle.yml\") . }}"
-    binaryData:
+  # secret defines a Secret associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file whisperService.secret.stringData.secrets-bundle=./custom.yml
+  secret:
+    data:
       noise-tunnel-keystore: "{{ .Files.Get \"files/whisper-service/noise-tunnel-keystore.p12\" | b64enc }}"
+    stringData:
+      secrets-bundle: "{{ tpl (.Files.Get \"files/whisper-service/sample-secrets-bundle.yml\") . }}"
   volumeMounts:
     - name: config
       readOnly: true
       configMap:
-        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
         items:
           - key: configuration
             path: configuration
             mountPath: /usr/share/signal/dev.yml
             readOnly: true
+    - name: secrets
+      readOnly: true
+      secret:
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
+        items:
           - key: secrets-bundle
             path: secrets-bundle
             mountPath: /usr/share/signal/sample-secrets-bundle.yml
@@ -77,7 +94,7 @@ whisperService:
     timeoutSeconds: 1
     failureThreshold: 10
     tcpSocket:
-      port: "{{ .Values.whisperService.service.ports.default.port }}"
+      port: "{{ .componentValues.service.ports.default.port }}"
   # waitForCompoenents defines the a map of component services to wait for during pod initialization.
   # Both the host and the port for each container are treated as Helm templates.
   waitForComponents:
@@ -112,7 +129,7 @@ storageService:
     repository: ghcr.io/mollyim/flatline-storage-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -137,19 +154,19 @@ storageService:
       value: "{{ .Values.storageService.service.ports.admin.port }}"
     - name: BIGTABLE_EMULATOR_HOST
       value: "{{ include \"common.fullname\" . }}-cbtemulator:{{ .Values.cbtemulator.service.ports.default.port }}"
-  # configMapFiles defines a map of data to be mounted as files in the component container.
-  # The contents of plaintext data files are treated as Helm templates.
-  # Some sample files files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
-  # Example: helm install dev . --set-file storageService.configMapFiles.data.configuration=./custom.yml
-  configMapFiles:
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file storageService.configMap.data.configuration=./custom.yml
+  configMap:
     data:
       configuration: "{{ tpl (.Files.Get \"files/storage-service/dev.yml\") . }}"
   volumeMounts:
     - name: config
       readOnly: false
       configMap:
-        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
         items:
           - key: configuration
             path: configuration
@@ -179,7 +196,7 @@ registrationService:
     repository: ghcr.io/mollyim/flatline-registration-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -203,7 +220,7 @@ contactDiscoveryService:
     repository: ghcr.io/mollyim/flatline-contact-discovery-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -227,7 +244,15 @@ contactDiscoveryService:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+#
+#  Infrastructure Components
+#  These components provide functionality that Flatline requires.
+#  Their container images are build and distributed by third parties.
+#  They are bundled in the chart to provide a functional development environment.
+#  They should be replaced with production-ready alternatives when appropriate.
+#
 # localstack defines the creation and bootstrapping of an environment emulating Amazon Web Services.
+# The DynamoDB and S3 features from AWS are required by the Whisper Service component.
 # Disable this component to use AWS or another compatible solution.
 localstack:
   enabled: true
@@ -241,7 +266,7 @@ localstack:
       default:
         port: 4566
         protocol: TCP
-  replicaCount: 1
+  replicas: 1
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
@@ -269,12 +294,12 @@ localstack:
     accessModes:
       - ReadWriteOnce
     size: 1Gi
-  # configMapFiles defines a map of data to be mounted as files in the component container.
-  # The contents of plaintext data files are treated as Helm templates.
-  # Some sample files files are bundled with the chart. These files are intended for development use only.
-  # Use the "--set-file" argument to Helm to replace the bundled files with your own.
-  # Example: helm install dev . --set-file localstack.configMapFiles.data.whisper-service-dynamic-configuration=./custom.yaml
-  configMapFiles:
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file localstack.configMap.data.whisper-service-dynamic-configuration=./custom.yaml
+  configMap:
     data:
       whisper-service-dynamic-configuration: "{{ tpl (.Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\") . }}"
       whisper-service-cloudformation: "{{ tpl (.Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\") . }}"
@@ -283,7 +308,7 @@ localstack:
     - name: config
       readOnly: false
       configMap:
-        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
         defaultMode: "0755"
         items:
           - key: whisper-service-dynamic-configuration
@@ -304,7 +329,7 @@ localstack:
       persistentVolumeClaim:
         claimName: "{{ include \"common.fullnameWithComponent\" . }}"
 # cbtemulator defines the creation of an environment emulating Google Cloud Bigtable.
-# Bigtable is required by the Storage Service component.
+# The Bigtable feature from GCP is required by the Storage Service component.
 # Disable this component to use Bigtable on GCP or another compatible solution.
 cbtemulator:
   enabled: true
@@ -318,7 +343,7 @@ cbtemulator:
       default:
         port: 9000
         protocol: TCP
-  replicaCount: 1
+  replicas: 1
   container:
     command: cbtemulator
     # args defines the arguments passed to the entrypoint command.
@@ -353,16 +378,16 @@ cbtemulator:
       readOnly: false
       persistentVolumeClaim:
         claimName: "{{ include \"common.fullnameWithComponent\" . }}"
-# tus defines the values for the TUS component for resumable file uploads.
-# TUS is required by the Whisper Service component.
-# Disable this component to use an alternative TUS implementation.
+# tus defines the values for the a resumable file uploads server.
+# Such a server is required by the Whisper Service component.
+# Disable this component to use an alternative implementation.
 tus:
   enabled: true
   image:
     repository: ghcr.io/tus/tusd
     tag: v2.8.0
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -379,8 +404,8 @@ tus:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
-# redisCluster defines the values for the creation of a development Redis cluster.
-# An existing Redis cluster is required by the Whisper Service component.
+# redisCluster defines the values for an insecure development Redis cluster.
+# Such a cluster is required by the Whisper Service component.
 # Disable this component to use a production Redis cluster.
 redisCluster:
   enabled: true
@@ -388,7 +413,7 @@ redisCluster:
     repository: docker.io/library/redis
     tag: 8.2.1
     pullPolicy: IfNotPresent
-  replicaCount: 6
+  replicas: 6
   cluster:
     replicasPerMaster: 1
   container:
@@ -409,7 +434,12 @@ redisCluster:
     accessModes:
       - ReadWriteOnce
     size: 1Gi
-  configMapFiles:
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file redisCluster.configMap.data.configuration=./custom.conf
+  configMap:
     data:
       configuration: "{{ tpl (.Files.Get \"files/redis-cluster/redis.conf\") . }}"
   volumeMounts:
@@ -419,7 +449,7 @@ redisCluster:
     - name: config
       readOnly: true
       configMap:
-        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
         items:
           - key: configuration
             path: configuration
@@ -433,7 +463,7 @@ redisCluster:
         set -e
         port={{ .componentValues.service.ports.default.port }}
         ADDRS=""
-        for i in $(seq 0 {{ add .componentValues.replicaCount -1 }}); do
+        for i in $(seq 0 {{ add .componentValues.replicas -1 }}); do
           pod={{ include "common.fullnameWithComponent" . }}-$i
           echo "Waiting for $pod to become ready..."
           until getent hosts $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local \
@@ -444,8 +474,19 @@ redisCluster:
           ADDRS="$ADDRS $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local:$port"
         done
         echo "yes" | redis-cli --cluster create $ADDRS --cluster-replicas {{ .componentValues.cluster.replicasPerMaster }}
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 60
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
-# Disable this component to use an existing OpenTelemtry Collector.
+# A collector compatible with StatsD is required by the Whisper Service component.
+# Disable this component to use an alternative StatsD collector.
 opentelemetryCollector:
   enabled: true
   nameOverride: "flatline-opentelemetry-collector"
@@ -475,7 +516,7 @@ opentelemetryCollector:
           receivers: [otlp, statsd]
           processors: [batch]
           exporters:
-            - prometheus # Use "debug" for terminal output.
+            - debug
 # traefikResources defines the values to create Traefik resources for TLS termination and HTTP routing.
 # These resources assume that both the Traefik and Traefik CRDs charts are installed in the cluster.
 # In the "k3s" distribution, both charts are installed by default.
@@ -498,21 +539,21 @@ traefikResources:
     valuesOverride:
       global:
         sendAnonymousUsage: false
+  # secret defines a Secret associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file traefikResources.secret.stringData."tls.key"=./custom.key
+  secret:
+    type: kubernetes.io/tls
+    stringData:
+      tls.crt: "{{ tpl (.Files.Get \"files/traefik/localhost.pem\") . }}"
+      tls.key: "{{ tpl (.Files.Get \"files/traefik/localhost.key\") . }}"
   # tls configures how Traefik will terminate TLS connections to Flatline. Required.
   tls:
-    # secretName can be used to reference an existing Kubernetes secret with "tls.crt" and "tls.key" items.
-    # This is recommended over including the private key in the chart values.
-    # When not set, the "crt" and "key" values are used. Required if "crt" and "key" are not set.
+    # secretName can be used to reference an existing Kubernetes TLS secret with "tls.crt" and "tls.key" items.
+    # When not set, the values defined in the "secret" section above are used.
     secretName: ""
-    # crt defines the public certificate encoded in base64.
-    # Do not use the provided example for production environments. Required if "secretName" is not set.
-    # TODO(uoemai): This value must be required from the user for this chart to be production ready.
-    crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURDRENDQWZDZ0F3SUJBZ0lVZm01cTh0TDdJb3c0eFlhNWlEemI3dTYrQUpzd0RRWUpLb1pJaHZjTkFRRUwKQlFBd0ZURVRNQkVHQTFVRUF3d0tVMlZzWmxOcFoyNWxaREFlRncweU1URXhNRGd5TURRM01qWmFGdzB6TVRFeApNRFl5TURRM01qWmFNQlF4RWpBUUJnTlZCQU1NQ1d4dlkyRnNhRzl6ZERDQ0FTSXdEUVlKS29aSWh2Y05BUUVCCkJRQURnZ0VQQURDQ0FRb0NnZ0VCQU5qSnhYU09rTzVOUDNqRzJ2THpyVnhnUVhFdTVSSTRqTVNMKzZJQjU3MEQKMHNxU1RLUzJsQ21MaDZWVmw5Wi9ta0JQa2ZwbFI1Rjl1WjdIdnR6ZHE5bTIxWXhlbmJMaTRPa1lVb0ZPN2NKbwpNUW9xV05sTUpDWDF3T3Q1YklGa3ozaXZsaHBTclJxZndVRVJKRkRyZ255VlY4S1hWNjg3Z0Jhd1pPNnFFNDlXCmtFaG8wa3o4NWt2eWpEdWI1S2I1VWwyb2M4eXNMZjNOc2o1TG9VdlpXSWZRL0VmRG9sd1pZSVJFNWhXbmxncDMKcTJRTEV0WXJvTGcyVnIyUSs1ZTIwNTFrK0JWd2VEcnhNT0FYVVpJQ3hibmszbGRQZWh6dmpDci9XOXJZdm1MSQpjNDErWUZEbGhVZUt3VEZrVDQ4WHBGck9xd3UwZ2dvcFpVamY0NnArYmdNQ0F3RUFBYU5STUU4d0h3WURWUjBqCkJCZ3dGb0FVWjFVbUZYcG9NaUhjZ2Q3elAraDdUdWFpdW1rd0NRWURWUjBUQkFJd0FEQUxCZ05WSFE4RUJBTUMKQmVBd0ZBWURWUjBSQkEwd0M0SUpiRzlqWVd4b2IzTjBNQTBHQ1NxR1NJYjNEUUVCQ3dVQUE0SUJBUUNXekllMgp5amd0MWVQbU9CUTVGdmxDZmxZcVpMZlY2RWdsYUovb2Y5TCsxby8wOGtjakZZVzlvYTVCeHBkOE8vYUVkdXpGCmJ5YlRLcmRtajd5WkplUE5XR0p5WjcvOHlQYjRxV2lVZGY1b003eWNJZ04xd3ZWN3o4Mk1Fc0ora0MyU0ZKRUwKeWlabUVTa1VxdEV3b0k2UXhLTjdFRXZxeXpDRzZWalBqTXJ6VFhOYUdRMWJhM3pNUFFubE5Xbkh1WW1YN2NnSQpKNWxVa3ZIRzBJMzJlbGFsd3BsaGFGaThqTmdSOHU0WXlxMDQ3UmpMWldDY0tmYStLRmx2WENZSTltajZqMmtWCjM1azlHUnd5S0kxemhyNGdWNiswWGwwajE5SlpjbEhSdDZkOCt5MDBiQzNXRHh1OW8rTTVmVGZZSGs1WHFQRHIKL1dWZW5NNERNaTBzS0ZUcgotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-    # key defines the certificate private key encoded in base64. Required if "secretName" is not set.
-    # Do not use the provided example for production environments.
-    # TODO(uoemai): This value must be required by the user for this chart to be production ready.
-    # TODO(uoemai): This value must be encrypted for this chart to be production ready.
-    key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktjd2dnU2pBZ0VBQW9JQkFRRFl5Y1YwanBEdVRUOTQKeHRyeTg2MWNZRUZ4THVVU09JekVpL3VpQWVlOUE5TEtra3lrdHBRcGk0ZWxWWmZXZjVwQVQ1SDZaVWVSZmJtZQp4NzdjM2F2WnR0V01YcDJ5NHVEcEdGS0JUdTNDYURFS0tsalpUQ1FsOWNEcmVXeUJaTTk0cjVZYVVxMGFuOEZCCkVTUlE2NEo4bFZmQ2wxZXZPNEFXc0dUdXFoT1BWcEJJYU5KTS9PWkw4b3c3bStTbStWSmRxSFBNckMzOXpiSSsKUzZGTDJWaUgwUHhIdzZKY0dXQ0VST1lWcDVZS2Q2dGtDeExXSzZDNE5sYTlrUHVYdHRPZFpQZ1ZjSGc2OFREZwpGMUdTQXNXNTVONVhUM29jNzR3cS8xdmEyTDVpeUhPTmZtQlE1WVZIaXNFeFpFK1BGNlJhenFzTHRJSUtLV1ZJCjMrT3FmbTREQWdNQkFBRUNnZ0VBRHE0ck51ZG9uUnFTRDhXM2tmZzZaeVVGaVhxWmZKQmp4L09LeUwvRVI2SjQKcGNzZWNaRURtNFNkWE83YzUyT2d1SFlxOW4vaFJ0THl2UFBkMHVzWDloaFJnYjN1Zyt5bE9tT3hRcHhyc1Z5SQo1WjFVZ3ZLTENCOEtQMmZybHgrU2hTT3UwSDJFeDJiR0dYZmxzNjBmR3Z5cUFyMW83SzdrejZTR1VUc25NKytTCnltakNMclNvcW5paktFdml2Wk1VMXduaDhqajg0ZjBvYnE3L3hqNTVYZWhteDRhYWJKMW1icHlIaUNCRGZIWXcKQTBjOWdVOHl5bDg0TDNzdE9hR1NCRUEwZ0ZvMzdDYkgxaU00MnRKNDlPZVRBZUFqNWRNbFlZT054WndhellaVgpPUVJhS1lXWE9ZbW53cHBMei8rMU0yYjZObUhHdXc0ZzhwcElkZytVUVFLQmdRRDF3Z0N3NGpPdUlTNys2TVlGClhaNjVYSGlKdUtITElNVlF3Rm9XVUNHYUwyRWcvNkJSelJHb0ZFblN0Y2lGM0FLQ2k5UUNUbUQxQXNEUHdsaVgKSVUzUk0xczNtODM4ZUpOSU4vbGFEOVlFSkMzWVpnOWxwWllPajNsUXkzUGZRd2FkTDU5MVlTMC9lUnBORzE1SgpLbU5BNGpscEZaK2tHZEw4Nlk2bzdCWmk4d0tCZ1FEaDByREhIWTZJb05NbDVvK053TVR4UVBHUEthejlnN3h4CjRoMTRydnZ5c3o2T0d2TVlFdWUwRFlSYXY4RGIvbDVLR2ViMFdWK2FxTVNqRnkwTHN0RVhUbFpQOWJwMnh2RGoKTG5WNUxjUEk0NDZtVmF0RTdDZ0xQWStMWlpTY0hmWU9QZkJGS1MvZGtJMDRiUjlodjB1dVpVNXh3cURiMEhKVAprR1NNd0FUc3NRS0JnUURhVU9SaVBpQWc0Uk9wbVVsSVBQbWl1dFhOcW5uNFEvMWxGZXN4aFMvRWs3QmFLeHZWCmJ6SHZPVTYzWTR0bDlxTTRLMVZFVXpKb2xYQ0pYNkZwYUVtRHZYYWIrTW5OTGFQUTlRQ0xGQ1JQKzMvS2pDZkQKYVl6YkZITjE1YmJpcjkweFI3d0Uvelc5L0N2ME1Zclp2bEQ3czd2Q2NWWW01bFg3SE5RQmxmRHhKd0tCZ0V3cApPZE85eFMrUlJnVTNVRjBYa1pSb09jLzExMUVkRi9ZMHM0bmJRai9sY2dpTlVFVmpRdC8zMnhhY0sxaEczdGdSCkNsS0l2ZlMwVExWUWdMRzhXa2FJOWhVN28rcWhSK2JtNlZtNE5KclJISEErM21kOVdqZ0lTQnhVWXgyUUFVZG0KWGwyRStZNjVUTmVsL2ZxQ2dPek5YL3FBRUs1eUM4emhHdmhaWG8vUkFvR0FacXdscSt1cnBUc0drMkZBSTE0ego2bW5TN3huMyt6eVFqNjBFRGplanVZbHcxeHpEZnlkU0VEU3NMVXc2WFZDL1h5RTVRTkduSDFDWER1eGoycTh3CkFzYmtNSzc2NXl4bFFBTm8rWkl3Q1JtNGk3N2h5QXJhNHdkdG8vb3A4Y25abVE2d1NpK2xnUXhRUWlUb0pjcG8KNXNVTnRNVXRWYUNIbkFIV2UyVGVHbVk9Ci0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS0K
-    # optionsName can be used to reference existing options to use for TLS termination. Optional.
+    # optionsName can be used to reference existing options to use for TLS termination.
     # When not set, Traefik defaults are used.
     optionsName: ""

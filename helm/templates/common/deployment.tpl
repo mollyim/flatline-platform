@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .componentValues.replicaCount }}
+  replicas: {{ .componentValues.replicas }}
   selector:
     matchLabels:
       {{- include "common.labels" . | nindent 6 }}
@@ -15,8 +15,11 @@ spec:
       labels:
         {{- include "common.labels" . | nindent 8 }}
       annotations:
-        {{- if .componentValues.configMapFiles }}
-        checksum/config: {{ include "common.configMapFilesChecksum" . }}
+        {{- if .componentValues.configMap }}
+        checksum/config: {{ include "common.configMapChecksum" . }}
+        {{- end }}
+        {{- if .componentValues.secret }}
+        checksum/secret: {{ include "common.secretChecksum" . }}
         {{- end }}
     spec:
       initContainers:
@@ -54,7 +57,7 @@ spec:
           command:
             - {{ quote .componentValues.container.command }}
           {{- if .componentValues.container.args }}
-          args: 
+          args:
             {{- range $arg := .componentValues.container.args }}
             {{- $rendered := tpl $arg $ }}
             - {{ quote $rendered }}
@@ -62,12 +65,28 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
+          {{- if .componentValues.service }}
+          ports:
+          {{- range $name, $p := .componentValues.service.ports }}
+            - name: {{ $name }}
+              containerPort: {{ $p.targetPort | default $p.port }}
+          {{- end }}
+          {{- end }}
           {{- if .componentValues.volumeMounts }}
           volumeMounts:
             {{- range $vm := .componentValues.volumeMounts }}
             {{- if $vm.configMap }}
             {{- range $vm.configMap.items }}
-            - name: {{ $vm.name }} 
+            - name: {{ $vm.name }}
+              mountPath: {{ .mountPath }}
+              subPath: {{ .path }}
+              {{- if .readOnly }}
+              readOnly: true
+              {{- end }}
+            {{- end }}
+            {{- else if $vm.secret }}
+            {{- range $vm.secret.items }}
+            - name: {{ $vm.name }}
               mountPath: {{ .mountPath }}
               subPath: {{ .path }}
               {{- if .readOnly }}
@@ -77,18 +96,14 @@ spec:
             {{- else if $vm.persistentVolumeClaim }}
             - name: {{ $vm.name }}
               mountPath: {{ $vm.mountPath }}
+              {{- if $vm.subPath }}
+              subPath: {{ $vm.subPath }}
+              {{- end }}
               {{- if $vm.readOnly }}
               readOnly: true
-              {{ end }}
+              {{- end }}
             {{- end }}
             {{- end }}
-          {{- end }}
-          {{- if .componentValues.service }}
-          ports:
-          {{- range $name, $p := .componentValues.service.ports }}
-            - name: {{ $name }}
-              containerPort: {{ $p.targetPort | default $p.port }}
-          {{- end }}
           {{- end }}
           env:
             {{- range .componentValues.env }}
@@ -127,10 +142,23 @@ spec:
             name: {{ tpl .configMap.name $ }}
             {{- if .configMap.defaultMode }}
             defaultMode: {{ .configMap.defaultMode }}
-            {{- end }} 
+            {{- end }}
             {{- if .configMap.items }}
             items:
               {{- range .configMap.items }}
+              - key: {{ .key }}
+                path: {{ .path }}
+              {{- end }}
+            {{- end }}
+          {{- else if .secret }}
+          secret:
+            secretName: {{ tpl .secret.name $ }}
+            {{- if .secret.defaultMode }}
+            defaultMode: {{ .secret.defaultMode }}
+            {{- end }}
+            {{- if .secret.items }}
+            items:
+              {{- range .secret.items }}
               - key: {{ .key }}
                 path: {{ .path }}
               {{- end }}
