@@ -16,7 +16,7 @@ whisperService:
     repository: ghcr.io/mollyim/flatline-whisper-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -112,7 +112,7 @@ storageService:
     repository: ghcr.io/mollyim/flatline-storage-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -179,7 +179,7 @@ registrationService:
     repository: ghcr.io/mollyim/flatline-registration-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -203,7 +203,7 @@ contactDiscoveryService:
     repository: ghcr.io/mollyim/flatline-contact-discovery-service
     tag: main
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -241,7 +241,7 @@ localstack:
       default:
         port: 4566
         protocol: TCP
-  replicaCount: 1
+  replicas: 1
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
@@ -318,7 +318,7 @@ cbtemulator:
       default:
         port: 9000
         protocol: TCP
-  replicaCount: 1
+  replicas: 1
   container:
     command: cbtemulator
     # args defines the arguments passed to the entrypoint command.
@@ -362,7 +362,7 @@ tus:
     repository: ghcr.io/tus/tusd
     tag: v2.8.0
     pullPolicy: IfNotPresent
-  replicaCount: 1
+  replicas: 1
   service:
     type: ClusterIP
     ports:
@@ -388,7 +388,7 @@ redisCluster:
     repository: docker.io/library/redis
     tag: 8.2.1
     pullPolicy: IfNotPresent
-  replicaCount: 6
+  replicas: 6
   cluster:
     replicasPerMaster: 1
   container:
@@ -433,7 +433,7 @@ redisCluster:
         set -e
         port={{ .componentValues.service.ports.default.port }}
         ADDRS=""
-        for i in $(seq 0 {{ add .componentValues.replicaCount -1 }}); do
+        for i in $(seq 0 {{ add .componentValues.replicas -1 }}); do
           pod={{ include "common.fullnameWithComponent" . }}-$i
           echo "Waiting for $pod to become ready..."
           until getent hosts $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local \
