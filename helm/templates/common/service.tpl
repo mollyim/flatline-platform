@@ -6,6 +6,7 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
+  clusterIP: {{ .componentValues.service.clusterIP | default "" }}
   type: {{ .componentValues.service.type }}
   ports:
     {{- range $name, $p := .componentValues.service.ports }}

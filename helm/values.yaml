@@ -56,7 +56,7 @@ whisperService:
       configMap:
         name: "{{ include \"common.fullnameWithComponent\" . }}-files"
         items:
-          - key: configuration 
+          - key: configuration
             path: configuration
             mountPath: /usr/share/signal/dev.yml
             readOnly: true
@@ -96,7 +96,7 @@ whisperService:
     redisCluster:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-redis-cluster"
-      port: "{{ .Values.redisCluster.service.ports.redis }}"
+      port: "{{ .Values.redisCluster.service.ports.default.port }}"
     opentelemetryCollector:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-opentelemetry-collector"
@@ -151,7 +151,7 @@ storageService:
       configMap:
         name: "{{ include \"common.fullnameWithComponent\" . }}-files"
         items:
-          - key: configuration 
+          - key: configuration
             path: configuration
             mountPath: /usr/share/signal/dev.yml
             readOnly: true
@@ -379,6 +379,71 @@ tus:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+# redisCluster defines the values for the creation of a development Redis cluster.
+# An existing Redis cluster is required by the Whisper Service component.
+# Disable this component to use a production Redis cluster.
+redisCluster:
+  enabled: true
+  image:
+    repository: docker.io/library/redis
+    tag: 8.2.1
+    pullPolicy: IfNotPresent
+  replicaCount: 6
+  cluster:
+    replicasPerMaster: 1
+  container:
+    command: redis-server
+    args:
+      - /etc/redis/redis.conf
+  service:
+    type: ClusterIP
+    clusterIP: None
+    ports:
+      default:
+        port: 6379
+        protocol: TCP
+  persistence:
+    # storageClassName defines the storage class that will be used by the created persistent volume. Optional.
+    # When not set, the global "defaultStorageClass" will be used.
+    storageClassName: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 1Gi
+  configMapFiles:
+    data:
+      configuration: "{{ tpl (.Files.Get \"files/redis-cluster/redis.conf\") . }}"
+  volumeMounts:
+    - name: data
+      mountPath: /data
+      readOnly: false
+    - name: config
+      readOnly: true
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}-files"
+        items:
+          - key: configuration
+            path: configuration
+            mountPath: /etc/redis/redis.conf
+            readOnly: true
+  job:
+    command: sh
+    args:
+      - -c
+      - |
+        set -e
+        port={{ .componentValues.service.ports.default.port }}
+        ADDRS=""
+        for i in $(seq 0 {{ add .componentValues.replicaCount -1 }}); do
+          pod={{ include "common.fullnameWithComponent" . }}-$i
+          echo "Waiting for $pod to become ready..."
+          until getent hosts $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local \
+            >/dev/null 2>&1; do sleep 1; done
+          until redis-cli -h $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local \
+            -p {{ .componentValues.service.ports.default.port }} PING \
+            >/dev/null 2>&1; do sleep 1; done
+          ADDRS="$ADDRS $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local:$port"
+        done
+        echo "yes" | redis-cli --cluster create $ADDRS --cluster-replicas {{ .componentValues.cluster.replicasPerMaster }}
 # opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
 # Disable this component to use an existing OpenTelemtry Collector.
 opentelemetryCollector:
@@ -411,13 +476,6 @@ opentelemetryCollector:
           processors: [batch]
           exporters:
             - prometheus # Use "debug" for terminal output.
-# redisCluster defines the values for Bitnami's Redis Cluster chart.
-# An existing Redis cluster is required by the Whisper Service component.
-# Disable this component to use an existing Redis cluster.
-redisCluster:
-  enabled: true
-  nameOverride: "flatline-redis-cluster"
-  usePassword: false
 # traefikResources defines the values to create Traefik resources for TLS termination and HTTP routing.
 # These resources assume that both the Traefik and Traefik CRDs charts are installed in the cluster.
 # In the "k3s" distribution, both charts are installed by default.
