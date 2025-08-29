@@ -56,7 +56,7 @@ spec:
               readOnly: true
               {{- end }}
             {{- end }}
-            {{- else }}
+            {{- else if $vm.persistentVolumeClaim }}
             - name: {{ $vm.name }}
               mountPath: {{ $vm.mountPath }}
               {{- if $vm.subPath }}
@@ -68,6 +68,35 @@ spec:
             {{- end }}
             {{- end }}
           {{- end }}
+          env:
+            {{- range .componentValues.env }}
+            - name: {{ .name }}
+              value: {{ quote (tpl .value $) }}
+            {{- end }}
+          {{- if .componentValues.startupProbe }}
+          startupProbe:
+            initialDelaySeconds: {{ .componentValues.startupProbe.initialDelaySeconds }}
+            periodSeconds:       {{ .componentValues.startupProbe.periodSeconds }}
+            timeoutSeconds:      {{ .componentValues.startupProbe.timeoutSeconds }}
+            failureThreshold:    {{ .componentValues.startupProbe.failureThreshold }}
+            {{- if .componentValues.startupProbe.exec }}
+            exec:
+              command:
+                {{- range $arg := .componentValues.startupProbe.exec.command }}
+                {{- $rendered := tpl $arg $ }}
+                - {{ quote $rendered }}
+                {{- end }}
+            {{- else if .componentValues.startupProbe.tcpSocket }}
+            tcpSocket:
+              port: {{ tpl .componentValues.startupProbe.tcpSocket.port . }}
+            {{- else if .componentValues.startupProbe.httpGet }}
+            httpGet:
+              path:   {{ .componentValues.startupProbe.httpGet.path }}
+              port:   {{ tpl .componentValues.startupProbe.httpGet.port . }}
+              scheme: {{ .componentValues.startupProbe.httpGet.scheme }}
+            {{- end }}
+          {{- end }}
+      {{- if .componentValues.volumeMounts }}
       volumes:
         {{- range .componentValues.volumeMounts }}
         - name: {{ .name }}
@@ -89,6 +118,7 @@ spec:
             claimName: {{ tpl .persistentVolumeClaim.claimName $ }}
           {{- end }}
         {{- end }}
+      {{- end }}
   volumeClaimTemplates:
     - metadata:
         name: data

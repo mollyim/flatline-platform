@@ -62,6 +62,13 @@ spec:
           {{- end }}
           {{- end }}
           {{- end }}
+          {{- if .componentValues.service }}
+          ports:
+          {{- range $name, $p := .componentValues.service.ports }}
+            - name: {{ $name }}
+              containerPort: {{ $p.targetPort | default $p.port }}
+          {{- end }}
+          {{- end }}
           {{- if .componentValues.volumeMounts }}
           volumeMounts:
             {{- range $vm := .componentValues.volumeMounts }}
@@ -77,18 +84,14 @@ spec:
             {{- else if $vm.persistentVolumeClaim }}
             - name: {{ $vm.name }}
               mountPath: {{ $vm.mountPath }}
+              {{- if $vm.subPath }}
+              subPath: {{ $vm.subPath }}
+              {{- end }}
               {{- if $vm.readOnly }}
               readOnly: true
-              {{ end }}
+              {{- end }}
             {{- end }}
             {{- end }}
-          {{- end }}
-          {{- if .componentValues.service }}
-          ports:
-          {{- range $name, $p := .componentValues.service.ports }}
-            - name: {{ $name }}
-              containerPort: {{ $p.targetPort | default $p.port }}
-          {{- end }}
           {{- end }}
           env:
             {{- range .componentValues.env }}
