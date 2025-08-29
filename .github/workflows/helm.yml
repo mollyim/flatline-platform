@@ -1,4 +1,4 @@
-name: Test Helm Charts
+name: Test Helm Chart
 
 on:
   push:
@@ -15,6 +15,7 @@ on:
 
 jobs:
   helm:
+    name: Test Helm Chart
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
