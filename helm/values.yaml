@@ -77,7 +77,7 @@ whisperService:
     timeoutSeconds: 1
     failureThreshold: 10
     tcpSocket:
-      port: "{{ .Values.whisperService.service.ports.default.port }}"
+      port: "{{ .componentValues.service.ports.default.port }}"
   # waitForCompoenents defines the a map of component services to wait for during pod initialization.
   # Both the host and the port for each container are treated as Helm templates.
   waitForComponents:
@@ -444,6 +444,16 @@ redisCluster:
           ADDRS="$ADDRS $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local:$port"
         done
         echo "yes" | redis-cli --cluster create $ADDRS --cluster-replicas {{ .componentValues.cluster.replicasPerMaster }}
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 60
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
 # Disable this component to use an existing OpenTelemtry Collector.
 opentelemetryCollector:
