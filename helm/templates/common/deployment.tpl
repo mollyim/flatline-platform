@@ -72,8 +72,8 @@ spec:
               subPath: {{ .path }}
               {{- if .readOnly }}
               readOnly: true
-              {{- end -}}
-            {{- end -}}
+              {{- end }}
+            {{- end }}
             {{- else if $vm.persistentVolumeClaim }}
             - name: {{ $vm.name }}
               mountPath: {{ $vm.mountPath }}
