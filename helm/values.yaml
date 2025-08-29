@@ -61,7 +61,7 @@ whisperService:
     data:
       noise-tunnel-keystore: "{{ .Files.Get \"files/whisper-service/noise-tunnel-keystore.p12\" | b64enc }}"
     stringData:
-      secrets-bundle: "{{ tpl (.Files.Get \"files/whisper-service/sample-secrets-bundle.yml\") . }}"
+      secrets-bundle: "{{ .Files.Get \"files/whisper-service/sample-secrets-bundle.yml\" }}"
   volumeMounts:
     - name: config
       readOnly: true
@@ -301,9 +301,9 @@ localstack:
   # Example: helm install dev . --set-file localstack.configMap.data.whisper-service-dynamic-configuration=./custom.yaml
   configMap:
     data:
-      whisper-service-dynamic-configuration: "{{ tpl (.Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\") . }}"
-      whisper-service-cloudformation: "{{ tpl (.Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\") . }}"
-      whisper-service-init-script: "{{ tpl (.Files.Get \"files/localstack/whisper-service-init.sh\") . }}"
+      whisper-service-dynamic-configuration: "{{ .Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\" }}"
+      whisper-service-cloudformation: "{{ .Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\" }}"
+      whisper-service-init-script: "{{ .Files.Get \"files/localstack/whisper-service-init.sh\" }}"
   volumeMounts:
     - name: config
       readOnly: false
@@ -441,7 +441,7 @@ redisCluster:
   # Example: helm install dev . --set-file redisCluster.configMap.data.configuration=./custom.conf
   configMap:
     data:
-      configuration: "{{ tpl (.Files.Get \"files/redis-cluster/redis.conf\") . }}"
+      configuration: "{{ .Files.Get \"files/redis-cluster/redis.conf\" }}"
   volumeMounts:
     - name: data
       mountPath: /data
@@ -459,21 +459,7 @@ redisCluster:
     command: sh
     args:
       - -c
-      - |
-        set -e
-        port={{ .componentValues.service.ports.default.port }}
-        ADDRS=""
-        for i in $(seq 0 {{ add .componentValues.replicas -1 }}); do
-          pod={{ include "common.fullnameWithComponent" . }}-$i
-          echo "Waiting for $pod to become ready..."
-          until getent hosts $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local \
-            >/dev/null 2>&1; do sleep 1; done
-          until redis-cli -h $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local \
-            -p {{ .componentValues.service.ports.default.port }} PING \
-            >/dev/null 2>&1; do sleep 1; done
-          ADDRS="$ADDRS $pod.{{ include "common.fullnameWithComponent" . }}.{{ .Release.Namespace }}.svc.cluster.local:$port"
-        done
-        echo "yes" | redis-cli --cluster create $ADDRS --cluster-replicas {{ .componentValues.cluster.replicasPerMaster }}
+      - "{{ tpl (.Files.Get \"files/redis-cluster/init.sh.tpl\") . }}"
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
@@ -547,8 +533,8 @@ traefikResources:
   secret:
     type: kubernetes.io/tls
     stringData:
-      tls.crt: "{{ tpl (.Files.Get \"files/traefik/localhost.pem\") . }}"
-      tls.key: "{{ tpl (.Files.Get \"files/traefik/localhost.key\") . }}"
+      tls.crt: "{{ .Files.Get \"files/traefik/localhost.pem\" }}"
+      tls.key: "{{ .Files.Get \"files/traefik/localhost.key\" }}"
   # tls configures how Traefik will terminate TLS connections to Flatline. Required.
   tls:
     # secretName can be used to reference an existing Kubernetes TLS secret with "tls.crt" and "tls.key" items.
