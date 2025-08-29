@@ -18,7 +18,7 @@
 ---
 {{ template "common.service" $ctx }}
 ---
-{{ template "common.configMapFiles" $ctx }}
+{{ template "common.configMap" $ctx }}
 ---
 {{ template "common.job" $ctx }}
 

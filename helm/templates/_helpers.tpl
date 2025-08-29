@@ -34,21 +34,38 @@ helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 {{- printf "%s-%s" $base .componentName | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{- define "common.configMapFilesChecksum" -}}
-{{- $dataFiles := .componentValues.configMapFiles.data }}
-{{- $binDataFiles  := .componentValues.configMapFiles.binaryData }}
-{{- $contents := "" }}
-{{- $dataKeys := keys $dataFiles | sortAlpha }}
-{{- range $i, $key := $dataKeys }}
-  {{- $path := index $dataFiles $key }}
-  {{- $raw  := $.Files.Get $path }}
-  {{- $contents = printf "%s\n%s" $contents $raw }}
+{{- define "common.configMapChecksum" -}}
+{{- $config := .componentValues.configMap }}
+{{- $collect := list }}
+{{- $sections := list (dict "m" $config.data) (dict "m" $config.binaryData) }}
+{{- range $s := $sections }}
+  {{- with $m := $s.m }}
+    {{- $keys := keys $m | sortAlpha }}
+    {{- range $i, $k := $keys }}
+      {{- $val := index $m $k }}
+      {{- $rendered := tpl $val $ }}
+      {{- $collect = append $collect (printf "%s" $rendered) }}
+    {{- end }}
+  {{- end }}
 {{- end }}
-{{- $binDataKeys := keys $binDataFiles | sortAlpha }}
-{{- range $i, $key := $binDataKeys }}
-  {{- $path := index $binDataFiles $key }}
-  {{- $raw  := $.Files.Get $path | b64enc }}
-  {{- $contents = printf "%s\n%s" $contents $raw }}
+{{- $contents := join "\n" $collect }}
+{{- printf "%s" ($contents | sha256sum | substr 0 62) }}
 {{- end }}
-{{- ($contents | sha256sum) | substr 0 62  }}
+
+{{- define "common.secretChecksum" -}}
+{{- $secret := .componentValues.secret }}
+{{- $collect := list }}
+{{- $sections := list (dict "m" $secret.data) (dict "m" $secret.stringData) (dict "m" $secret.binaryData) }}
+{{- range $s := $sections }}
+  {{- with $m := $s.m }}
+    {{- $keys := keys $m | sortAlpha }}
+    {{- range $i, $k := $keys }}
+      {{- $val := index $m $k }}
+      {{- $rendered := tpl $val $ }}
+      {{- $collect = append $collect (printf "%s" $rendered) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $contents := join "\n" $collect }}
+{{- printf "%s" ($contents | sha256sum | substr 0 62) }}
 {{- end }}
