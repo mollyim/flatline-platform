@@ -476,7 +476,7 @@ redisCluster:
 # Disable this component to use an alternative StatsD collector.
 opentelemetryCollector:
   enabled: true
-  nameOverride: "flatline-opentelemetry-collector"
+  nameOverride: opentelemetry-collector
   mode: deployment
   image:
     repository: docker.io/otel/opentelemetry-collector-contrib
