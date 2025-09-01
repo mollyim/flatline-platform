@@ -2,6 +2,10 @@ apiVersion: v2
 name: flatline
 version: 0.0.0
 
+maintainers:
+  - name: Uoemai
+    email: 218074189+uoemai@users.noreply.github.com
+
 dependencies:
   - name: opentelemetry-collector
     version: "0.130.2"

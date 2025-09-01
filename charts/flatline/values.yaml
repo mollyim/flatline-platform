@@ -233,7 +233,8 @@ contactDiscoveryService:
     - name: _JAVA_OPTIONS
       value: -Dmicronaut.environments=dev
     - name: SGX_MODE
-      value: SIM # Run SGX in simulation mode.
+      # Run SGX in simulation mode.
+      value: SIM
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
