@@ -59,4 +59,7 @@ jobs:
 
       - name: Chart Test Install
         if: steps.check-changes.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }}
+        run: |
+          ct install \
+          --helm-extra-set-args "--set=traefikResources.enabled=false" \
+          --target-branch ${{ github.event.repository.default_branch }}
