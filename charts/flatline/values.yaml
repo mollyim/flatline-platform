@@ -376,16 +376,6 @@ cbtemulator:
       - "{{ .componentValues.service.ports.default.port }}"
       - -dir
       - /var/bigtable
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 5
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 5
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
   persistence:
     # storageClassName defines the storage class that will be used by the created persistent volume. Optional.
     # When not set, the global "defaultStorageClass" will be used.
@@ -399,6 +389,16 @@ cbtemulator:
       readOnly: false
       persistentVolumeClaim:
         claimName: "{{ include \"common.fullnameWithComponent\" . }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 5
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # tus defines the values for the a resumable file uploads server.
 # Such a server is required by the Whisper Service component.
 # Disable this component to use an alternative implementation.
@@ -535,6 +535,16 @@ otelCollector:
             path: configuration
             mountPath: /etc/otelcol-contrib/config.yaml
             readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.http.port }}"
 # traefikResources defines the values to create Traefik resources for TLS termination and HTTP routing.
 # These resources assume that both the Traefik and Traefik CRDs charts are installed in the cluster.
 # In the "k3s" distribution, both charts are installed by default.
