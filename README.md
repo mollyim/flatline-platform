@@ -12,7 +12,7 @@ Do not run this in production environments.
 
 It relies on various [components](#components) forked from their original [Signal repositories](https://github.com/signalapp).
 
-This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?repo_name=flatline-platform), [workflows](.github/workflows), [infrastructure](helm/) and documentation for these components.
+This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?repo_name=flatline-platform), [workflows](.github/workflows), [infrastructure](charts/flatline) and documentation for these components.
 
 ## Components
 
@@ -35,7 +35,7 @@ Flatline is composed of multiple services organized under Flatline Platform as s
   - Repository: https://github.com/mollyim/flatline-contact-discovery-service
   - Upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
 
-Additionally, Flatline relies on other infrastructure components described in [its Helm chart](helm/).
+Additionally, Flatline relies on other infrastructure components described in [its Helm chart](charts/flatline).
 
 ## Development
 
@@ -192,12 +192,12 @@ From a client configured to the target Kubernetes cluster, clone the repository 
 
 This process will install Flatline for local testing, with bundled sample configurations and "secrets".
 
-To deviate from these steps, review the [`values.yaml`](helm/values.yaml) file for defaults and [customization](#customizing-the-installation) options.
+To deviate from these steps, review the [`values.yaml`](charts/flatline/values.yaml) file for defaults and [customization](#customizing-the-installation) options.
 
 ```bash
 HELM_RELEASE=dev # Optional: Replace "dev" with a different name to identify your release. 
 git clone git@github.com:mollyim/flatline-platform.git && cd flatline-platform
-helm install $HELM_RELEASE ./helm
+helm install $HELM_RELEASE ./charts/flatline
 ```
 
 When installation succeeds, follow the printed instructions to reach the deployed Flatline components.
@@ -213,7 +213,7 @@ Some common customization options are:
 - Disabling bundled infrastructure components (e.g. Traefik-specific resources, Redis cluster, OpenTelemetry Collector, tus...) to use existing ones.
 - Using an existing StorageClass instead of the default [`k3s` local path provisioner](https://docs.k3s.io/storage).
 
-These and other customizations are documented in the [`values.yaml`](helm/values.yaml) file.
+These and other customizations are documented in the [`values.yaml`](charts/flatline/values.yaml) file.
 
 You can read about [how to override values with Helm](https://helm.sh/docs/helm/helm_install/) in the official documentation.
 
@@ -313,5 +313,5 @@ contactDiscoveryService:
 Finally, upgrade the Helm release to use these custom image values:
 
 ```bash
-helm upgrade -f local.yaml $HELM_RELEASE ./helm
+helm upgrade -f local.yaml $HELM_RELEASE ./charts/flatline
 ```
