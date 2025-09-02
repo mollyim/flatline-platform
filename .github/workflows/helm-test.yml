@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'helm/**'
-      - '.github/workflows/helm.yml'
+      - 'charts/**'
+      - '.github/workflows/helm-test.yml'
   pull_request:
     paths:
-      - 'helm/**'
-      - '.github/workflows/helm.yml'
+      - 'charts/**'
+      - '.github/workflows/helm-test.yml'
   workflow_dispatch:
 
 jobs:
@@ -45,6 +45,10 @@ jobs:
             echo "changes=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Configure Helm Repositories
+        run: |
+          helm repo add opentelemetry-collector https://open-telemetry.github.io/opentelemetry-helm-charts
+
       - name: Chart Test Lint
         if: steps.check-changes.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
         run: ct lint --target-branch ${{ github.event.repository.default_branch }}
@@ -55,4 +59,8 @@ jobs:
 
       - name: Chart Test Install
         if: steps.check-changes.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        run: ct install --target-branch ${{ github.event.repository.default_branch }}
+        run: |
+          ct install \
+          --helm-extra-args "--timeout 120s" \
+          --helm-extra-set-args "--set=traefikResources.enabled=false" \
+          --target-branch ${{ github.event.repository.default_branch }}

@@ -25,8 +25,8 @@ spec:
       initContainers:
       {{- if .componentValues.waitForComponents }}
         - name: wait-for-components
-          image: {{ .Values.common.waitForComponentsInitContainer.image.repository }}:{{ .Values.common.waitForComponentsInitContainer.image.tag }}
-          imagePullPolicy: {{ .Values.common.waitForComponentsInitContainer.image.pullPolicy }}
+          image: {{ .Values.common.defaultInitContainer.image.repository }}:{{ .Values.common.defaultInitContainer.image.tag }}
+          imagePullPolicy: {{ .Values.common.defaultInitContainer.image.pullPolicy }}
           command:
             - /bin/sh
             - -c
@@ -47,6 +47,27 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
+      {{- end }}
+      {{- if .componentValues.initContainer }}
+        - name: {{ .componentValues.initContainer.name | default "init" }}
+          {{- if .componentValues.initContainer.image }}
+          image: {{ .componentValues.initContainer.image.repository }}:{{ .componentValues.initContainer.image.tag }}
+          imagePullPolicy: {{ .componentValues.initContainer.image.pullPolicy | default .Values.common.defaultInitContainer.image.pullPolicy }}
+          {{- else }}
+          image: {{ .Values.defaultInitContainer.image.repository }}:{{ .Values.defaultInitContainer.image.tag }}
+          imagePullPolicy: {{ .Values.common.defaultInitContainer.image.pullPolicy }}
+          {{- end }}
+          {{- if .componentValues.initContainer.command }}
+          command:
+            - {{ quote .componentValues.initContainer.command }}
+          {{- if .componentValues.initContainer.args }}
+          args:
+            {{- range $arg := .componentValues.initContainer.args }}
+            {{- $rendered := tpl $arg $ }}
+            - {{ quote $rendered }}
+            {{- end }}
+          {{- end }}
+          {{- end }}
       {{- end }}
       containers:
         - name: {{ .componentName }}

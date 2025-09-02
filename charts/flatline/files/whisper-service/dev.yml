@@ -409,10 +409,10 @@ oneTimeDonations:
 registrationService:
   host: {{ include "common.fullname" . }}-registration-service
   port: 50051
-  credentialConfigurationJson: irrelevant # Uses fake credentials during development.
+  credentialConfigurationJson: '{ "irrelevant": true }' # Uses fake credentials during development.
   identityTokenAudience: irrelevant # Uses fake credentials during development.
   collationKeySalt: secret://registrationService.collationKeySalt
-  registrationCaCertificate: irrelenvat # Uses insecure channel during development.
+  registrationCaCertificate: irrelevant # Uses insecure channel during development.
 
 # Key transparency is disabled in the prototype.
 keyTransparencyService:

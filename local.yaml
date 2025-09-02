@@ -1,0 +1,12 @@
+whisperService:
+  image:
+    tag: pr-15 
+storageService:
+  image:
+    tag: pr-15
+registrationService:
+  image:
+    tag: pr-15
+contactDiscoveryService:
+  image:
+    tag: pr-15
