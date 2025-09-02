@@ -195,7 +195,7 @@ This process will install Flatline for local testing, with bundled sample config
 To deviate from these steps, review the [`values.yaml`](charts/flatline/values.yaml) file for defaults and [customization](#customizing-the-installation) options.
 
 ```bash
-HELM_RELEASE=dev # Optional: Replace "dev" with a different name to identify your release. 
+HELM_RELEASE=flatline # Optional: Replace "flatline" with a different name to identify your release.
 git clone git@github.com:mollyim/flatline-platform.git && cd flatline-platform
 helm install $HELM_RELEASE ./charts/flatline
 ```
