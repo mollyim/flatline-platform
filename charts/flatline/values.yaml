@@ -3,8 +3,10 @@ global:
   defaultStorageClass: ""
 # common defines shared values for this chart.
 common:
-  # waitForComponentsInitContainer defines the container that will be used to wait for other components.
-  waitForComponentsInitContainer:
+  # defaultInitContainer defines the values to be used by default in various init containers.
+  # Components defined with an "initContainer" object create a container that will use these defaults.
+  # The "waitForComponents" object also creates an init container that will use these defaults.
+  defaultInitContainer:
     image:
       repository: docker.io/library/busybox
       tag: 1.36.1
@@ -95,6 +97,23 @@ whisperService:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+  # initContainer defines processes that must succeed during pod initialization.
+  initContainer:
+    image:
+      repository: docker.io/library/redis
+      tag: 8.2.1
+    command: sh
+    # args defines the arguments passed to the entrypoint command.
+    # Each argument is treated as a Helm template.
+    args:
+      - -c
+      - |
+        REDIS_HOST="{{ include "common.fullname" . }}-redis-cluster"
+        REDIS_PORT={{ .Values.redisCluster.service.ports.default.port }}
+        EXPECTED_NODES={{ .Values.redisCluster.replicas }}
+        redis-cli -h "${REDIS_HOST}" -p ${REDIS_PORT} --raw CLUSTER INFO \
+          | grep -E 'cluster_state|cluster_known_nodes' && \
+        test "$(redis-cli -h "${REDIS_HOST}" -p ${REDIS_PORT} CLUSTER NODES | wc -l)" -eq ${EXPECTED_NODES}
   # waitForCompoenents defines the a map of component services to wait for during pod initialization.
   # Both the host and the port for each container are treated as Helm templates.
   waitForComponents:
@@ -348,7 +367,7 @@ cbtemulator:
   container:
     command: cbtemulator
     # args defines the arguments passed to the entrypoint command.
-    # Each argument is treated as Helm templates.
+    # Each argument is treated as a Helm template.
     args:
       - -host
       - 0.0.0.0
@@ -419,6 +438,8 @@ redisCluster:
     replicasPerMaster: 1
   container:
     command: redis-server
+    # args defines the arguments passed to the entrypoint command.
+    # Each argument is treated as a Helm template.
     args:
       - /etc/redis/redis.conf
   service:
@@ -458,6 +479,8 @@ redisCluster:
             readOnly: true
   job:
     command: sh
+    # args defines the arguments passed to the entrypoint command.
+    # Each argument is treated as a Helm template.
     args:
       - -c
       - "{{ tpl (.Files.Get \"files/redis-cluster/init.sh.tpl\") . }}"
@@ -471,6 +494,7 @@ redisCluster:
     failureThreshold: 60
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+
 # opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
 # A collector compatible with StatsD is required by the Whisper Service component.
 # Disable this component to use an alternative StatsD collector.
