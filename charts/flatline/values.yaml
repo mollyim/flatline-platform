@@ -87,16 +87,6 @@ whisperService:
             path: noise-tunnel-keystore
             mountPath: /usr/share/signal/noise-tunnel-keystore.p12
             readOnly: true
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
   # initContainer defines a process that must succeed during pod initialization.
   initContainer:
     image:
@@ -134,14 +124,24 @@ whisperService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-redis-cluster"
       port: "{{ .Values.redisCluster.service.ports.default.port }}"
-    opentelemetryCollector:
+    otelCollector:
       type: tcp
-      host: "{{ include \"common.fullname\" . }}-opentelemetry-collector"
-      port: "{{ regexReplaceAll \".*:([0-9]+)$\" .Values.opentelemetryCollector.config.receivers.otlp.protocols.http.endpoint \"$1\" }}"
+      host: "{{ include \"common.fullname\" . }}-otel-collector"
+      port: "{{ .Values.otelCollector.service.ports.http.port }}"
     registrationService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-registration-service"
       port: "{{ .Values.registrationService.service.ports.default.port }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # storageService defines the values for the Storage Service component.
 storageService:
   enabled: true
@@ -192,16 +192,6 @@ storageService:
             path: configuration
             mountPath: /usr/share/signal/dev.yml
             readOnly: true
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
   # waitForCompoenents defines the a map of component services to wait for during pod initialization.
   # Both the host and the port for each container are treated as Helm templates.
   waitForComponents:
@@ -209,6 +199,16 @@ storageService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-cbtemulator"
       port: "{{ .Values.cbtemulator.service.ports.default.port }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 20
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # registrationService defines the values for the Registration Service component.
 registrationService:
   enabled: true
@@ -376,16 +376,6 @@ cbtemulator:
       - "{{ .componentValues.service.ports.default.port }}"
       - -dir
       - /var/bigtable
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 5
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 5
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
   persistence:
     # storageClassName defines the storage class that will be used by the created persistent volume. Optional.
     # When not set, the global "defaultStorageClass" will be used.
@@ -399,6 +389,16 @@ cbtemulator:
       readOnly: false
       persistentVolumeClaim:
         claimName: "{{ include \"common.fullnameWithComponent\" . }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 5
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # tus defines the values for the a resumable file uploads server.
 # Such a server is required by the Whisper Service component.
 # Disable this component to use an alternative implementation.
@@ -495,39 +495,56 @@ redisCluster:
     failureThreshold: 60
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
-# opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
+# otelCollector defines the values for an OpenTelemetry collector.
 # A collector compatible with StatsD is required by the Whisper Service component.
-# Disable this component to use an alternative StatsD collector.
-opentelemetryCollector:
+# Disable this component to use an existing StatsD collector.
+otelCollector:
   enabled: true
-  nameOverride: opentelemetry-collector
-  mode: deployment
   image:
     repository: docker.io/otel/opentelemetry-collector-contrib
-  config:
-    receivers:
-      statsd:
-        endpoint: 0.0.0.0:8125
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-    exporters:
-      prometheus:
-        endpoint: 0.0.0.0:8889
-    extensions:
-      health_check:
-        endpoint: 0.0.0.0:13133
-    service:
-      extensions: [health_check]
-      pipelines:
-        metrics:
-          receivers: [otlp, statsd]
-          processors: [batch]
-          exporters:
-            - debug
+    tag: 0.133.0
+  replicas: 1
+  service:
+    type: ClusterIP
+    clusterIP: None
+    ports:
+      default:
+        port: 8125
+        protocol: UDP
+      grpc:
+        port: 4317
+        protocol: UDP
+      http:
+        port: 4318
+        protocol: TCP
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file otelCollector.configMap.data.configuration=./custom.yaml
+  configMap:
+    data:
+      configuration: "{{ .Files.Get \"files/otel-collector/config.yaml\" }}"
+  volumeMounts:
+    - name: config
+      readOnly: true
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
+        items:
+          - key: configuration
+            path: configuration
+            mountPath: /etc/otelcol-contrib/config.yaml
+            readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.http.port }}"
 # traefikResources defines the values to create Traefik resources for TLS termination and HTTP routing.
 # These resources assume that both the Traefik and Traefik CRDs charts are installed in the cluster.
 # In the "k3s" distribution, both charts are installed by default.

@@ -23,7 +23,7 @@ metrics:
         - "env:staging"
         - "service:chat"
       udpTransport:
-        statsdHost: {{ include "common.fullname" . }}-opentelemetry-collector
+        statsdHost: {{ include "common.fullname" . }}-otel-collector
         port: 8125
       excludesAttributes:
         - m1_rate

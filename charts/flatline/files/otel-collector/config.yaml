@@ -1,0 +1,27 @@
+receivers:
+  statsd:
+    endpoint: 0.0.0.0:8125
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+processors:
+  batch:
+exporters:
+  debug:
+    verbosity: normal
+    sampling_initial: 5
+    sampling_thereafter: 20
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+service:
+  extensions: [health_check]
+  pipelines:
+    metrics:
+      receivers: [otlp, statsd]
+      processors: [batch]
+      exporters:
+        - debug
