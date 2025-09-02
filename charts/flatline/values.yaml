@@ -97,7 +97,7 @@ whisperService:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
-  # initContainer defines processes that must succeed during pod initialization.
+  # initContainer defines a process that must succeed during pod initialization.
   initContainer:
     image:
       repository: docker.io/library/redis
@@ -107,6 +107,7 @@ whisperService:
     # Each argument is treated as a Helm template.
     args:
       - -c
+      # Ensure that the Redis cluster has all of its nodes.
       - |
         REDIS_HOST="{{ include "common.fullname" . }}-redis-cluster"
         REDIS_PORT={{ .Values.redisCluster.service.ports.default.port }}
@@ -494,7 +495,6 @@ redisCluster:
     failureThreshold: 60
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
-
 # opentelemetryCollector defines the values for the OpenTelemetry Collector chart.
 # A collector compatible with StatsD is required by the Whisper Service component.
 # Disable this component to use an alternative StatsD collector.
