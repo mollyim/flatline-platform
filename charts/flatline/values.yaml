@@ -87,16 +87,6 @@ whisperService:
             path: noise-tunnel-keystore
             mountPath: /usr/share/signal/noise-tunnel-keystore.p12
             readOnly: true
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
   # initContainer defines a process that must succeed during pod initialization.
   initContainer:
     image:
@@ -142,6 +132,16 @@ whisperService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-registration-service"
       port: "{{ .Values.registrationService.service.ports.default.port }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # storageService defines the values for the Storage Service component.
 storageService:
   enabled: true
@@ -192,16 +192,6 @@ storageService:
             path: configuration
             mountPath: /usr/share/signal/dev.yml
             readOnly: true
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
   # waitForCompoenents defines the a map of component services to wait for during pod initialization.
   # Both the host and the port for each container are treated as Helm templates.
   waitForComponents:
@@ -209,6 +199,16 @@ storageService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-cbtemulator"
       port: "{{ .Values.cbtemulator.service.ports.default.port }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 20
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # registrationService defines the values for the Registration Service component.
 registrationService:
   enabled: true
