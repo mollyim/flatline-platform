@@ -1,0 +1,45 @@
+name: Sync Upstream
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  sync:
+    name: Sync
+    if: "github.repository_owner == 'mollyim'"
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        project:
+          - name: Whisper Service
+            repo: mollyim/flatline-whisper-service
+            upstream: https://github.com/signalapp/Signal-Server
+          - name: Storage Service
+            repo: mollyim/flatline-storage-service
+            upstream: https://github.com/signalapp/storage-service
+          - name: Registration Service
+            repo: mollyim/flatline-registration-service
+            upstream: https://github.com/signalapp/registration-service
+          - name: Contact Discovery Service
+            repo: mollyim/flatline-contact-discovery-service
+            upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
+    steps:
+      - name: Checkout Upstream Branch 
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          clean: true
+          repository: ${{ matrix.project.repo }}
+          ref: upstream
+          fetch-depth: 0
+          token: ${{ secrets.PUBLISH_PAT || secrets.GITHUB_TOKEN }}
+      - name: Fetch & Merge
+        run: |
+          git remote add upstream ${{ matrix.project.upstream }}
+          git fetch upstream
+          git merge --ff-only upstream/main
+      - name: Push Changes
+        run: |
+          git push origin upstream
+          git tag | grep -xP 'v\d+(?:\.\d+){2,3}' | xargs -r git push origin
