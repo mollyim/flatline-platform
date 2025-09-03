@@ -16,5 +16,5 @@ spec:
       name: {{ $name }}
     {{- end }}
   selector:
-    {{- include "common.labels" . | nindent 4 }}
+    {{- include "common.selectorLabels" . | nindent 4 }}
 {{- end }}

@@ -9,7 +9,7 @@ spec:
   replicas: {{ .componentValues.replicas }}
   selector:
     matchLabels:
-      {{- include "common.labels" . | nindent 6 }}
+      {{- include "common.selectorLabels" . | nindent 6 }}
   serviceName: {{ include "common.fullnameWithComponent" . }}
   template:
     metadata:
