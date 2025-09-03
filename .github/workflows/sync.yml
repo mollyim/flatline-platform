@@ -33,7 +33,7 @@ jobs:
           repository: ${{ matrix.project.repo }}
           ref: upstream
           fetch-depth: 0
-          token: ${{ secrets.PUBLISH_PAT || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.FLATLINE_SYNC_PAT || secrets.GITHUB_TOKEN }}
       - name: Fetch & Merge
         run: |
           git remote add upstream ${{ matrix.project.upstream }}
