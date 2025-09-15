@@ -23,11 +23,11 @@ $ kubectl wait --timeout=5m -n {{ .Release.Namespace }} deployment/{{ include "c
 {{ if .Values.traefikResources.enabled -}}
 Since you have chosen to use the development Traefik resources, you can find the relevant Flatline endpoints here:
 
-- Whisper Service: https://{{ .Values.traefikResources.hostname}}/whisper/
-- Whisper Service Admin: https://{{ .Values.traefikResources.hostname}}/whisper/admin/
-- Storage Service: https://{{ .Values.traefikResources.hostname}}/storage/
-- Storage Service Admin: https://{{ .Values.traefikResources.hostname}}/storage/admin
-- Contact Discovery Service: https://{{ .Values.traefikResources.hostname}}/cds/
+- Whisper Service: https://flatline-whisper.{{ .Values.traefikResources.hostname}}
+- Whisper Service Admin: https://flatline-whisper-admin.{{ .Values.traefikResources.hostname}}
+- Storage Service: https://flatline-storage.{{ .Values.traefikResources.hostname}}
+- Storage Service Admin: https://flatline-storage-admin.{{ .Values.traefikResources.hostname}}
+- Contact Discovery Service: https://flatline-cds.{{ .Values.traefikResources.hostname}}
 {{ else -}}
 Since you have chosen to use your own ingress gateway, ensure that the relevant Flatline endpoints are exposed:
 
