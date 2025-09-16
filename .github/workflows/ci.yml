@@ -2,9 +2,21 @@ name: Continuous Integration
 
 on:
   pull_request:
+    paths:
+      - 'flatline-whisper-service'
+      - 'flatline-storage-service'
+      - 'flatline-registration-service'
+      - 'flatline-contact-discovery-service'
+      - '.github/workflows/ci.yml'
   push:
     branches:
       - main
+    paths:
+      - 'flatline-whisper-service'
+      - 'flatline-storage-service'
+      - 'flatline-registration-service'
+      - 'flatline-contact-discovery-service'
+      - '.github/workflows/ci.yml'
 
 env:
   DEFAULT_BRANCH: main

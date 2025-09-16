@@ -5,13 +5,6 @@ on:
     workflows: ["Continuous Integration"]
     types: [completed]
     branches-ignore: [main]
-    # Only test new container images with Helm if any of the components have changed in the PR.
-    # Otherwise, the chart will be tested with the existing container images in a different workflow.
-    paths:
-      - 'flatline-whisper-service'
-      - 'flatline-storage-service'
-      - 'flatline-registration-service'
-      - 'flatline-contact-discovery-service'
   workflow_dispatch:
 
 jobs:
