@@ -39,11 +39,11 @@ jobs:
           # Workflow only runs on PR branches.
           tag="pr-$(echo "$GITHUB_REF_NAME" | cut -d'/' -f1)"
           ct install \
+          --all \
           --helm-extra-args "--timeout 180s" \
           --helm-extra-set-args " \
             --set=traefikResources.enabled=false \
             --set=whisperService.image.tag=$tag \
             --set=storageService.image.tag=$tag \
             --set=registrationService.image.tag=$tag \
-            --set=contactDiscoveryService.image.tag=$tag" \
-          --target-branch ${{ github.event.repository.default_branch }}
+            --set=contactDiscoveryService.image.tag=$tag"
