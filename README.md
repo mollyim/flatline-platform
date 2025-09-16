@@ -49,9 +49,9 @@ git clone --recurse-submodules git@github.com:mollyim/flatline-platform.git
 
 Testing and building this project relies on [Docker](https://docs.docker.com/engine/install/).
 
-This project is intended to be built with the [Temurin 21 JDK](https://adoptium.net/installation/).
+This project is intended to be built with the [Temurin 24 JDK](https://adoptium.net/installation/).
 
-For the following commands to succeed, ensure that `JAVA_HOME` points to a valid Temurin 21 JDK installation.
+For the following commands to succeed, ensure that `JAVA_HOME` points to a valid Temurin 24 JDK installation.
 
 ### Testing
 
