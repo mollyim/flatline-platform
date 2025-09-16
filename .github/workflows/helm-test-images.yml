@@ -4,6 +4,7 @@ on:
   workflow_run:
     workflows: ["Continuous Integration"]
     types: [completed]
+    branches-ignore: [main]
 
 jobs:
   helm:
@@ -31,26 +32,17 @@ jobs:
 
       - name: Create KinD Cluster
         uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
-      
-      - name: Determine Container Image Tag
-        id: tag
-        run: |
-          if [ "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH" ]; then
-            echo "tag=${DEFAULT_BRANCH}" >> $GITHUB_OUTPUT
-            echo "extra-tags=latest" >> $GITHUB_OUTPUT
-          else
-            # Workflow only runs on the default branch and on PR branches.
-            tag="pr-$(echo "$GITHUB_REF_NAME" | cut -d'/' -f1)"
-            echo "tag=$tag" >> $GITHUB_OUTPUT
-            echo "extra-tags=$tag" >> $GITHUB_OUTPUT
-          fi
-        env:
-          GITHUB_REF_NAME: ${{ github.ref_name }}
-          DEFAULT_BRANCH: ${{ env.DEFAULT_BRANCH }}
 
       - name: Chart Test Install
         run: |
+          # Workflow only runs on PR branches.
+          tag="pr-$(echo "$GITHUB_REF_NAME" | cut -d'/' -f1)"
           ct install \
           --helm-extra-args "--timeout 180s" \
-          --helm-extra-set-args "--set=traefikResources.enabled=false" \
+          --helm-extra-set-args " \
+            --set=traefikResources.enabled=false \
+            --set=whisperService.image.tag=$tag \
+            --set=storageService.image.tag=$tag \
+            --set=registrationService.image.tag=$tag \
+            --set=contactDiscoveryService.image.tag=$tag" \
           --target-branch ${{ github.event.repository.default_branch }}
