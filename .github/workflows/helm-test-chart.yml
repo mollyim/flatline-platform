@@ -4,13 +4,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'charts/**'
-      - '.github/workflows/helm-test.yml'
   pull_request:
-    paths:
-      - 'charts/**'
-      - '.github/workflows/helm-test.yml'
+    # Only test the Helm chart with the existing images if none of the components have changed in the PR.
+    # Otherwise, the chart will be tested with the new container images in a different workflow.
+    paths-ignore:
+      - 'flatline-whisper-service'
+      - 'flatline-storage-service'
+      - 'flatline-registration-service'
+      - 'flatline-contact-discovery-service'
   workflow_dispatch:
 
 jobs:
