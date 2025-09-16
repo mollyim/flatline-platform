@@ -38,12 +38,12 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           submodules: "recursive"
-      - &set-up-jdk-21
-        name: Set up JDK 21
+      - &set-up-jdk-24
+        name: Set up JDK 24
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: 24
           cache: 'maven'
         env:
           # Work around incorrect HOME in container runners.
@@ -120,7 +120,7 @@ jobs:
     steps:
       - *install-git
       - *checkout-sources
-      - *set-up-jdk-21
+      - *set-up-jdk-24
       - *determine-container-image-tag
       - name: Test & Build Container Image
         run: |
@@ -145,7 +145,7 @@ jobs:
     steps:
       - *install-git
       - *checkout-sources
-      - *set-up-jdk-21
+      - *set-up-jdk-24
       - *determine-container-image-tag
       - name: Test & Build Container Image
         run: |
@@ -167,11 +167,11 @@ jobs:
         working-directory: flatline-contact-discovery-service 
     steps:
       - *checkout-sources
-      - name: Set up JDK 21
+      - name: Set up JDK 24
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
           distribution: 'temurin'
-          java-version: 21
+          java-version: 24
           cache: 'maven'
       - *determine-container-image-tag
       - name: Test
