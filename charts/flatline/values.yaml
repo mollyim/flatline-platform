@@ -22,7 +22,7 @@ whisperService:
   image:
     repository: ghcr.io/mollyim/flatline-whisper-service
     tag: main
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   replicas: 1
   service:
     type: ClusterIP
@@ -148,7 +148,7 @@ storageService:
   image:
     repository: ghcr.io/mollyim/flatline-storage-service
     tag: main
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   replicas: 1
   service:
     type: ClusterIP
@@ -215,7 +215,7 @@ registrationService:
   image:
     repository: ghcr.io/mollyim/flatline-registration-service
     tag: main
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   replicas: 1
   service:
     type: ClusterIP
@@ -239,7 +239,7 @@ contactDiscoveryService:
   image:
     repository: ghcr.io/mollyim/flatline-contact-discovery-service
     tag: main
-    pullPolicy: IfNotPresent
+    pullPolicy: Always
   replicas: 1
   service:
     type: ClusterIP
