@@ -309,7 +309,8 @@ dogstatsd:
   host: {{ include "common.fullname" . }}-otel-collector
 
 openTelemetry:
-  enabled: true
+  # FLT(uoemai): Migrate from StatsD to OTel. Enabling this currently triggers an error with Redis.
+  enabled: false
   environment: dev
   url: http://{{ include "common.fullname" . }}-otel-collector:{{ .Values.otelCollector.service.ports.http.port }}/
 
