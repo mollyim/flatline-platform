@@ -35,10 +35,14 @@ jobs:
       run:
         working-directory: flatline-whisper-service 
     services:
-      foundationdb:
+      foundationdb0:
         # Should be the same as the client version or close behind.
         image: foundationdb/foundationdb:7.3.62
-        options: --name foundationdb
+        options: --name foundationdb0
+      foundationdb1:
+        # Should be the same as the client version or close behind.
+        image: foundationdb/foundationdb:7.3.62
+        options: --name foundationdb1
     steps:
       - &install-git
         name: Install Git
@@ -74,7 +78,9 @@ jobs:
             tee /etc/apt/sources.list.d/docker.list > /dev/null
           apt update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
       - name: Configure FoundationDB
-        run: docker exec foundationdb /usr/bin/fdbcli --exec "configure new single memory"
+        run: |
+          docker exec foundationdb0 /usr/bin/fdbcli --exec "configure new single memory"
+          docker exec foundationdb1 /usr/bin/fdbcli --exec "configure new single memory"
       - name: Download FoundationDB Client
         run: |
           ./mvnw -e -B \
@@ -88,7 +94,7 @@ jobs:
         run: |
           ./mvnw -e -B \
             clean verify \
-            -DfoundationDb.serviceContainerName=foundationdb \
+            -DfoundationDb.serviceContainerNamePrefix=foundationdb \
             -pl '!integration-tests' \
             -Dsurefire.failIfNoSpecifiedTests=false \
             -Dtest=\!org.whispersystems.textsecuregcm.controllers.VerificationControllerTest,\!org.whispersystems.textsecuregcm.controllers.SubscriptionControllerTest,\!org.whispersystems.textsecuregcm.registration.IdentityTokenCallCredentialsTest
