@@ -29,27 +29,27 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`flatline-whisper.{{ $hostname }}`)
+    - match: Host(`whisper.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
           port: {{ .Values.whisperService.service.ports.default.port }}
-    - match: Host(`flatline-whisper-admin.{{ $hostname }}`)
+    - match: Host(`whisper-admin.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
           port: {{ .Values.whisperService.service.ports.admin.port }}
-    - match: Host(`flatline-storage.{{ $hostname }}`)
+    - match: Host(`storage.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-storage-service
           port: {{ .Values.storageService.service.ports.default.port }}
-    - match: Host(`flatline-storage-admin.{{ $hostname }}`)
+    - match: Host(`storage-admin.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-storage-service
           port: {{ .Values.storageService.service.ports.admin.port }}
-    - match: Host(`flatline-cds.{{ $hostname }}`)
+    - match: Host(`cds.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-contact-discovery-service

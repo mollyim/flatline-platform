@@ -553,7 +553,7 @@ otelCollector:
 traefikResources:
   enabled: true
   # hostname configures the DNS name that will be used to access Flatline. Required.
-  hostname: localhost
+  hostname: flatline.localhost
   # chart references the existing Traefik chart. Optional.
   chart:
     # name references the name of the Traefik chart that is installed. Optional.
