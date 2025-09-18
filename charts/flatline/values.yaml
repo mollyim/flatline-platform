@@ -575,8 +575,8 @@ traefikResources:
   secret:
     type: kubernetes.io/tls
     stringData:
-      tls.crt: "{{ .Files.Get \"files/traefik/localhost.pem\" }}"
-      tls.key: "{{ .Files.Get \"files/traefik/localhost.key\" }}"
+      tls.crt: "{{ .Files.Get \"files/traefik/wildcard-localhost.pem\" }}"
+      tls.key: "{{ .Files.Get \"files/traefik/wildcard-localhost.key.pem\" }}"
   # tls configures how Traefik will terminate TLS connections to Flatline. Required.
   tls:
     # secretName can be used to reference an existing Kubernetes TLS secret with "tls.crt" and "tls.key" items.

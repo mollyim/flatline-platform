@@ -1,0 +1,15 @@
+[req]
+distinguished_name = dn
+x509_extensions = v3_ca
+prompt = no
+default_md = sha256
+
+[dn]
+O = Flatline Dev CA
+CN = Flatline Dev CA
+
+[v3_ca]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer
+basicConstraints = critical, CA:TRUE, pathlen:0
+keyUsage = critical, cRLSign, keyCertSign
