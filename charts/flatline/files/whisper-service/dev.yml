@@ -4,7 +4,7 @@
 # Most other values are technically valid for a local/demonstration environment, but are probably not production-ready.
 
 logging:
-  level: INFO
+  level: DEBUG
   appenders:
     - type: console
       threshold: ALL

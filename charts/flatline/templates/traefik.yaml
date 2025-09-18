@@ -29,7 +29,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`{{ $hostname }}`) && PathPrefix(`/whisper/`)
+    - match: Host(`flatline-whisper.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
@@ -39,7 +39,7 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
           port: {{ .Values.whisperService.service.ports.admin.port }}
-    - match: Host(`flatline-whisper.{{ $hostname }}`)
+    - match: Host(`flatline-storage.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-storage-service
