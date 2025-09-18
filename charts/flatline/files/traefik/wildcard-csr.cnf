@@ -1,0 +1,12 @@
+[req]
+distinguished_name = dn
+req_extensions = req_ext
+prompt = no
+default_md = sha256
+
+[dn]
+O = Flatline Dev
+CN = *.localhost
+
+[req_ext]
+subjectAltName = DNS:*.localhost,DNS:localhost,IP:127.0.0.1
