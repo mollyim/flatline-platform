@@ -1,6 +1,6 @@
 basicConstraints = CA:FALSE
 keyUsage = digitalSignature,keyEncipherment
 extendedKeyUsage = serverAuth
-subjectAltName = DNS:*.localhost,DNS:localhost,IP:127.0.0.1
+subjectAltName = DNS:*.flatline.localhost,DNS:flatline.localhost
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid,issuer
