@@ -409,12 +409,35 @@ tus:
     tag: v2.8.0
     pullPolicy: IfNotPresent
   replicas: 1
+  container:
+    command: /usr/local/share/docker-entrypoint.sh
+    # args defines the arguments passed to the entrypoint command.
+    # Each argument is treated as a Helm template.
+    args:
+      - --upload-dir
+      - /srv/tusd-data/data
+      - --base-path
+      - /files/attachments/
+      - --verbose
   service:
     type: ClusterIP
     ports:
       default:
         port: 8080
         protocol: TCP
+  persistence:
+    # storageClassName defines the storage class that will be used by the created persistent volume. Optional.
+    # When not set, the global "defaultStorageClass" will be used.
+    storageClassName: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+  volumeMounts:
+    - name: data
+      mountPath: /srv/tusd-data/data
+      readOnly: false
+      persistentVolumeClaim:
+        claimName: "{{ include \"common.fullnameWithComponent\" . }}"
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
@@ -506,7 +529,6 @@ otelCollector:
   replicas: 1
   service:
     type: ClusterIP
-    clusterIP: None
     ports:
       default:
         port: 8125

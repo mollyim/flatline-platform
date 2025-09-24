@@ -4,7 +4,7 @@
 # Most other values are technically valid for a local/demonstration environment, but are probably not production-ready.
 
 logging:
-  level: DEBUG
+  level: INFO
   appenders:
     - type: console
       threshold: ALL
@@ -181,6 +181,7 @@ dynamoDbTables:
     tableName: VerificationSessions
 
 pagedSingleUseKEMPreKeyStore:
+  endpointOverride: http://{{ include "common.fullname" . }}-localstack:4566 # AWS endpoint
   bucket: whisper-service-pre-key-store # S3 Bucket name
   region: us-east-1                     # AWS region
 
@@ -295,6 +296,7 @@ cdn:
     accessKeyId: secret://cdn.accessKey
     secretAccessKey: secret://cdn.accessSecret
   region: us-east-1  # AWS region
+  endpointOverride: http://{{ include "common.fullname" . }}-localstack:4566 # AWS endpoint
 
 cdn3StorageManager:
   baseUri: https://storage-manager.example.com
