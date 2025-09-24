@@ -54,6 +54,11 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-contact-discovery-service
           port: {{ .Values.contactDiscoveryService.service.ports.default.port }}
+    - match: Host(`cdn.{{ $hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-tus
+          port: {{ .Values.tus.service.ports.default.port }}
   tls:
     secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
     options:
