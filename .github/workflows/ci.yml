@@ -209,6 +209,30 @@ jobs:
             -Djib.to.auth.username=${{ github.token }} \
             -Djib.to.auth.password=${{ github.token }}
 
+  key-transparency-server:
+    name: Key Transparency Server
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-key-transparency-server
+    steps:
+      - *install-git
+      - *checkout-sources
+      - *determine-container-image-tag
+      - name: Set up Go
+        id: setup-go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: go.mod
+      - name: Test & Build Container Image
+        run: |
+          go test ./...
+          docker build . --file docker/Dockerfile --build-arg GO_VERSION=${{ steps.setup-go.outputs.go-version }} \
+            --tag "ghcr.io/${{ github.repository_owner }}/flatline-key-transparency-server:${{ steps.tag.outputs.tag }}"
+          docker push "ghcr.io/${{ github.repository_owner }}/flatline-key-transparency-server:${{ steps.tag.outputs.tag }}"
+
   helm:
     name: Helm Test Images
     needs:
