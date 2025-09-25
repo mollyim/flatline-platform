@@ -217,7 +217,6 @@ jobs:
       run:
         working-directory: flatline-key-transparency-server
     steps:
-      - *install-git
       - *checkout-sources
       - *determine-container-image-tag
       - name: Set up Go
