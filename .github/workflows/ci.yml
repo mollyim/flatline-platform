@@ -225,7 +225,7 @@ jobs:
         id: setup-go
         uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
         with:
-          go-version-file: go.mod
+          go-version-file: flatline-key-transparency-server/go.mod
       - name: Test & Build Container Image
         run: |
           go test ./...
