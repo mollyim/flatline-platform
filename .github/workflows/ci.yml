@@ -212,7 +212,6 @@ jobs:
   key-transparency-server:
     name: Key Transparency Server
     runs-on: ubuntu-latest
-    container: ubuntu:22.04
     timeout-minutes: 20
     defaults:
       run:
