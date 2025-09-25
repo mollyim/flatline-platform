@@ -1,0 +1,49 @@
+kt:
+  server-addr: localhost:8082
+  authorized-headers:
+    ExampleHeader1:
+      - example value one
+      - example value two
+  header-value-to-auditor-name:
+    example value one: example-auditor-1
+    example value two: example-auditor-2
+
+kt-query:
+  server-addr: localhost:8080
+  # at least one header-value mapping in this map will be required to be present on inbound requests with the configured value
+  authorized-headers:
+    ExampleHeader1:
+      - example value one
+      - example value two
+  header-value-to-auditor-name:
+    example value one: example-auditor-1
+    example value two: example-auditor-2
+
+kt-test:
+  server-addr: localhost:8081
+
+metrics-addr: localhost:8083
+health-addr: localhost:8084
+
+api:
+  # FLT(uoemai): Development keys generated with:
+  # go run github.com/mollyim/flatline-key-transparency-server
+  signing-key: 5ff55ca989e35c8d8bbdadf357681382b6a6538a325453da07155a24796c7476
+  vrf-key: 3eeb6580f32632e4e15690bbd558aed94d7ab45105521de3ddc761e6d4f9cbaf
+  prefix-key: c98ca7eef8ae84bdffce2540e359f27575c939fc7ce5a521d2458afb910d0b69
+  opening-key: a04ef7ea91b313d88700df45ab52c422def6444088a9b5d48e761d2dc402c44e
+  # fake:
+  #   count: 1
+  #   interval: 10s
+  distinguished: 1m
+  auditors:
+    example-auditor-1: abcdef1234abcdef1234abcdef1234abcdef1234abcdef1234abcdef1234abcd
+    example-auditor-2: abcdef1234abcdef1234abcdef1234abcdef1234abcdef1234abcdef1234abcd
+  min-search-delay: 1s
+  min-monitor-delay: 1s
+  jitter-percent: 10
+
+db:
+  file: example/db
+
+account-db: mock

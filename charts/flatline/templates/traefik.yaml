@@ -49,6 +49,11 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-storage-service
           port: {{ .Values.storageService.service.ports.admin.port }}
+    - match: Host(`kt.{{ $hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-kt-server
+          port: {{ .Values.ktServer.service.ports.default.port }}
     - match: Host(`cds.{{ $hostname }}`)
       kind: Rule
       services:
