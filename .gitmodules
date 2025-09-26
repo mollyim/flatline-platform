@@ -10,3 +10,6 @@
 [submodule "flatline-contact-discovery-service"]
 	path = flatline-contact-discovery-service
 	url = https://github.com/mollyim/flatline-contact-discovery-service.git
+[submodule "flatline-key-transparency-server"]
+	path = flatline-key-transparency-server
+	url = https://github.com/mollyim/flatline-key-transparency-server.git
