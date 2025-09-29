@@ -351,10 +351,10 @@ Resources:
         - AttributeName: N
           KeyType: HASH
 
-  ReportMessagesTable:
+  ReportMessageTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: ReportMessages
+      TableName: ReportMessage
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: H
