@@ -24,6 +24,32 @@ whisperService:
     tag: main
     pullPolicy: Always
   replicas: 1
+  container:
+    command: java
+    args:
+      - -server
+      - -Djava.awt.headless=true
+      - -Djdk.nio.maxCachedBufferSize=262144
+      - -Dlog4j2.formatMsgNoLookups=true
+      - -Dsecrets.bundle.filename=/usr/share/signal/sample-secrets-bundle.yml
+      - -XX:MaxRAMPercentage=75
+      - -XX:+HeapDumpOnOutOfMemoryError
+      - -XX:HeapDumpPath=/tmp/heapdump.bin
+      - -cp
+      - /app/resources:/app/classes:/app/libs/*
+      - org.whispersystems.textsecuregcm.WhisperServerService
+      - server
+      - /usr/share/signal/dev.yml
+      # Other useful arguments:
+      # Generate ZK parameters:
+      #   - zkparams
+      # Generate CA for unidentified delivery:
+      #   - certificate
+      #   - --ca
+      # Generate certificate for unidentified delivery:
+      #   - certificate
+      #   - --key=<ca-private-key>
+      #   - --id=<certificate-serial-number>
   service:
     type: ClusterIP
     ports:
@@ -289,6 +315,9 @@ keyTransparencyServer:
     ports:
       default:
         port: 8080
+        protocol: TCP
+      rw:
+        port: 8082
         protocol: TCP
   # configMap defines a ConfigMap associated with the component.
   # The contents of all entries are treated as Helm templates.

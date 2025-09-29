@@ -1,5 +1,5 @@
 kt:
-  server-addr: localhost:8082
+  server-addr: 0.0.0.0:8082
   authorized-headers:
     ExampleHeader1:
       - example value one
@@ -9,7 +9,7 @@ kt:
     example value two: example-auditor-2
 
 kt-query:
-  server-addr: localhost:8080
+  server-addr: 0.0.0.0:8080
   # at least one header-value mapping in this map will be required to be present on inbound requests with the configured value
   authorized-headers:
     ExampleHeader1:
@@ -19,8 +19,9 @@ kt-query:
     example value one: example-auditor-1
     example value two: example-auditor-2
 
-kt-test:
-  server-addr: localhost:8081
+# FLT(uoemai): This server is only for testing.
+# kt-test:
+#   server-addr: localhost:8081
 
 metrics-addr: localhost:8083
 health-addr: localhost:8084
