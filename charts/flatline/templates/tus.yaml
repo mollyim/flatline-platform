@@ -18,5 +18,7 @@
 {{ template "common.service" $ctx }}
 ---
 {{ template "common.volume" $ctx }}
+---
+{{ template "common.configMap" $ctx }}
 
 {{- end -}}
