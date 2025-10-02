@@ -28,7 +28,8 @@ Since you have chosen to use the development Traefik resources, you can find the
 - Storage Service: https://storage.{{ .Values.traefikResources.hostname}}
 - Storage Service Admin: https://storage-admin.{{ .Values.traefikResources.hostname}}
 - Contact Discovery Service: https://cds.{{ .Values.traefikResources.hostname}}
-- Content Delivery Network: https://cdn.{{ .Values.traefikResources.hostname}}
+- "CDN" based on tus: https://cdn-tus.{{ .Values.traefikResources.hostname}}
+- "CDN" based on S3: https://cdn-s3.{{ .Values.traefikResources.hostname}}
 - Key Transparency Server: https://kt.{{ .Values.traefikResources.hostname}}
 {{ else -}}
 Since you have chosen to use your own ingress gateway, ensure that the relevant Flatline endpoints are exposed:
