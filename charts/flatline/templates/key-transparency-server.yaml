@@ -1,4 +1,5 @@
-{{- $componentName := "tus" -}}
+{{- $componentName := "key-transparency-server" -}}
+{{- $componentValues := .Values.keyTransparencyServer -}}
 
 {{- $ctx := dict
     "Release"          .Release
@@ -8,7 +9,7 @@
     "Files"            .Files
     "Template"         .Template
     "componentName"    $componentName
-    "componentValues"  (index .Values $componentName)
+    "componentValues"  $componentValues
 -}}
 
 {{- if $ctx.componentValues.enabled -}}
@@ -16,8 +17,6 @@
 {{ template "common.deployment" $ctx }}
 ---
 {{ template "common.service" $ctx }}
----
-{{ template "common.volume" $ctx }}
 ---
 {{ template "common.configMap" $ctx }}
 

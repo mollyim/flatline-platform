@@ -59,6 +59,11 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-tus
           port: {{ .Values.tus.service.ports.default.port }}
+    - match: Host(`kt.{{ $hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-key-transparency-server
+          port: {{ .Values.keyTransparencyServer.service.ports.default.port }}
   tls:
     secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
     options:

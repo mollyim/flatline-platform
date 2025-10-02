@@ -5,16 +5,18 @@ set -euo pipefail
 CREATE_CA=false
 CREATE_CERT=false
 BC_PATH=""
+P12_PASS=""
 
 usage() {
   cat <<EOF
 Usage: ${0##*/} [-ca] [-cert] [-bc PATH] [-h|--help]
 
 Options:
-  -ca            Create a new self-signed CA to use to sign the certificate.
-  -cert          Create a new certificate signed with the CA to use for serving Flatline.
-  -bc PATH       Create a BKSv1 store for the Whisper client. PATH must point to a JAR for a Bouncy Castle provider.
-  -h, --help     Show this help and exit.
+  -ca           Create a new self-signed CA to use to sign the certificate.
+  -cert         Create a new certificate signed with the CA to use for serving Flatline.
+  -bc PATH      Create a BKSv1 store for the Whisper client. PATH must point to a JAR for a Bouncy Castle provider.
+  -p12 PASS     Create a PKCS#12 export of the certificate protected with the provided password.
+  -h, --help    Show this help and exit.
 EOF
 }
 
@@ -34,6 +36,15 @@ while [[ $# -gt 0 ]]; do
         shift 2
       else
         echo "Error: -bc requires a PATH argument. PATH must point to a JAR for a Bouncy Castle provider." >&2
+        exit 2
+      fi
+      ;;
+    -p12)
+      if [[ -n "${2-}" && "${2:0:1}" != "-" ]]; then
+        P12_PASS=$2
+        shift 2
+      else
+        echo "Error: -p12 requires a PASS argument. PASS must be a valid password string." >&2
         exit 2
       fi
       ;;
@@ -95,4 +106,9 @@ if [ -n "$BC_PATH" ]; then
     -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
     -providerpath "$BC_PATH" \
     -storepass whisper
+fi
+
+if [ -n "$P12_PASS" ]; then
+  # Store certificate in a PKCS#12 file.
+  openssl pkcs12 -export -password pass:$P12_PASS -inkey wildcard-localhost.key.pem -in wildcard-localhost.pem -out wildcard-localhost.p12
 fi

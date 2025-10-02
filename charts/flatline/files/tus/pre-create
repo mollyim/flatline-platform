@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# This hook emulates the behaviour of the original resumable uploads implementation.
+# The original server relies on a custom Cloudflare worker for uploads and R2 for downloads.
+# Source: https://github.com/signalapp/tus-server/
+# This hook uses the filename provided in the Upload-Metadata header to identify the upload.
+# This behavior is expected by the clients and similarly implemented in the original server:
+# https://github.com/signalapp/tus-server/blob/0.9.0/src/uploadHandler.ts#L142-L148 
+# This allows the resumable upload server to be used to both upload and download files by clients.
+
+# WARNING: This hook is not meant to be production ready and may, in certain cases, be unstable or insecure.
+# This script is intended to emulate the behaviour expected by existing clients for the Flatline prototype.
+
+set -euo pipefail
+
+upload_metadata=$(jq -r '.Event.HTTPRequest.Header."Upload-Metadata" // empty |
+  if type=="array" then .[0] else . end' -)
+
+printf 'debug: extracted Upload-Metadata header: "%s"\n' "$upload_metadata" >&2
+
+if ! upload_filename_b64=$(printf '%s' "$upload_metadata" | grep -o 'filename [A-Za-z0-9+/=]\+' | cut -d' ' -f2); then
+  echo "error: failed to extract filename from Upload-Metadata header" >&2
+  exit 1
+fi
+
+if [ -z "${upload_filename_b64:-}" ]; then
+  echo "error: failed to extract filename from Upload-Metadata header" >&2
+  exit 1
+fi
+
+printf 'debug: extracted upload filename in base64: "%s"\n' "$upload_filename_b64" >&2
+
+if ! upload_filename=$(printf '%s' "$upload_filename_b64" | base64 -d 2>/dev/null); then
+  echo "error: failed to decode filename from Upload-Metadata header as base64" >&2
+  exit 1
+fi
+
+if [ -z "${upload_filename:-}" ]; then
+  echo "error: decoded filename is empty" >&2
+  exit 1
+fi
+
+printf 'debug: extracted final upload filename: "%s"\n' "$upload_filename" >&2
+
+if printf '%s' "$upload_filename" | grep -q '[[:space:]/]'; then
+  echo "error: filename contains spaces or slashes; rejecting" >&2
+  exit 1
+fi
+
+if [ -e "./$upload_filename" ]; then
+  echo "warn: file with upload metadata filename already exists; rejecting" >&2
+  jq -n --argjson body '{"message":"an object already exists with the same upload metadata filename"}' \
+    '{HTTPResponse: {StatusCode: 409, Body: $body}, RejectUpload: true}'
+  exit 1
+fi
+
+printf 'debug: storing upload with ID matching upload metadata filename: "%s"\n' "$upload_filename" >&2
+
+jq -n --arg id "$upload_filename" \
+  '{ChangeFileInfo: {ID: $id}}'
