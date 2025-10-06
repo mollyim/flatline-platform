@@ -461,7 +461,7 @@ cbtemulator:
   job:
     image:
       repository: docker.io/google/cloud-sdk
-      tag: 541.0.0-alpine
+      tag: 541.0.0
     command: sh
     # args defines the arguments passed to the entrypoint command.
     # Each argument is treated as a Helm template.
