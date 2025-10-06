@@ -12,6 +12,11 @@ Resources:
     Properties:
       BucketName: whisper-service-pre-key-store
 
+  WhisperServiceCdnBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: whisper-service-cdn
+
   AccountsTable:
     Type: AWS::DynamoDB::Table
     Properties:

@@ -291,11 +291,11 @@ fcm:
   credentials: secret://fcm.credentials
 
 cdn:
-  bucket: cdn        # S3 Bucket name
+  bucket: whisper-service-cdn # S3 Bucket name
   credentials:
     accessKeyId: secret://cdn.accessKey
     secretAccessKey: secret://cdn.accessSecret
-  region: us-east-1  # AWS region
+  region: us-east-1 # AWS region
   endpointOverride: http://{{ include "common.fullname" . }}-localstack:4566 # AWS endpoint
 
 cdn3StorageManager:
