@@ -16,6 +16,8 @@
 
 {{ template "common.deployment" $ctx }}
 ---
+{{ template "common.job" $ctx }}
+---
 {{ template "common.service" $ctx }}
 ---
 {{ template "common.volume" $ctx }}
