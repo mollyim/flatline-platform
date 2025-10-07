@@ -12,7 +12,7 @@ echo "Creating the following tables and column families:"
 echo $TABLE_FAMILY
 
 echo "Listing existing tables..."
-tables=$(cbt -project "$PROJECT" -instance "$INSTANCE" ls 2>/dev/null || true)
+tables=$(cbt -project "$PROJECT" -instance "$INSTANCE" ls || true)
 
 exists() {
   table=$1
