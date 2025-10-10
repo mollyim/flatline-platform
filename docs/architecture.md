@@ -115,7 +115,7 @@ The Flatline prototype uses the StatsD receiver from the OpenTelemetry Collector
 
 ## Excluded Components
 
-Various components that are present in the original Signal implementation have been excluded from the Flatline prototype. Some are security-enhancing or feature-specific components that are only excluded to keep the scope of the prototype constrained, while others are at odds with the goals of the Flatline project due to their purpose or due to being tightly coupled to specific commercial services or hardware.
+Various components that are present in the original Signal implementation have been excluded from the Flatline prototype. Some are security-enhancing or feature-specific components that are only excluded in order to keep the scope of the prototype constrained, while others are at odds with the goals of the Flatline project due to their purpose or due to being tightly coupled to specific commercial services or hardware.
 
 The following is a non-exhaustive list of important components that are excluded from the Flatline prototype.
 
@@ -143,4 +143,4 @@ In the Flatline prototype, the Molly application will fail to connect to the CDS
 
 The [Key Transparency Server](https://github.com/signalapp/key-transparency-server) component allows clients to verify that the public keys that they obtain from Flatline are in fact associated to the identity (e.g. the phone number) that they are attempting to communicate with. This is achieved by appending every public key update and its associated identity to a "globally consistent, cryptographically-protected, append-only log". The integrity of this log is verified and signed by the [Key Transparency Auditor](https://github.com/signalapp/key-transparency-auditor) component, which acts as a third-party auditor for the key transparency log. This feature has still not been officially announced and its sources were published after the development of Flatline began.
 
-In the Flatline prototype, this component is not implemented in order to contain the scope of the prototype. At the time of writing, key transparency checks seem to be implemented in the clients but not yet enforced. As a result, Flatline is able to function without it. In the future, these components should be deployed and configured in Flatline in order to support clients eventually enforcing their usage.
+In the Flatline prototype, this components are excluded in order to contain the scope of the prototype. At the time of writing, key transparency checks seem to be implemented in the clients but not yet enforced. As a result, Flatline is able to function without it. In the future, these components should be included in order to support clients eventually enforcing their usage.
