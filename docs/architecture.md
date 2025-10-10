@@ -1,8 +1,8 @@
 # Flatline Prototype Architecture
 
-The following document describes the current architecture of the Flatline prototype. Its goals are to show the relationship between each of the main Flatline components and to explain their individual function. Additionally, this document serves as the basis for discussing the choices regarding which components from the standard Signal implementation were included in or excluded from the Flatline prototype.
+This document describes the current architecture of the Flatline prototype in order to show the relationship between each of the main Flatline components and to explain their individual function. Additionally, this document discusses the choices regarding which components from the original Signal implementation were excluded from the Flatline prototype.
 
-Although this architecture description is based in the [Kubernates](https://kubernetes.io/)-based installation provided for Flatline, it only references components that are specific to Flatline. However, it is worth mentioning that some choices were influenced by our choice to deploy Flatline with [Helm](https://helm.sh/) and to primarily target a single-node [k3s](https://k3s.io/) cluster.
+Although this architecture description is based in the [Kubernetes](https://kubernetes.io/)-based installation provided for Flatline, it only references components that are specific to Flatline. However, it is worth mentioning that some choices were influenced by our choice to deploy Flatline with [Helm](https://helm.sh/) and to primarily target a single-node [k3s](https://k3s.io/) cluster.
 
 ## Diagram
 
@@ -69,7 +69,7 @@ Traefik was used for this purpose due to the fact that it is bundled with [k3s](
 
 #### LocalStack
 
-In the Flatline prototype, [LocalStack](https://github.com/localstack/localstack) is used to emulate various AWS services that some components and clients rely on in the original implementation.
+In the Flatline prototype, [LocalStack](https://github.com/localstack/localstack) is used to emulate various AWS services that components and clients originally depended on.
 
 The required AWS resources are created during the initialization of LocalStack [via CloudFormation](../charts/flatline/files/localstack/whisper-service-aws-cloudformation.yaml). After the creation of those resources, the necessary S3 objects will be [uploaded](../charts/flatline/files/localstack/whisper-service-init.sh) using the `awslocal` tool.
 
@@ -115,7 +115,7 @@ The Flatline prototype uses the StatsD receiver from the OpenTelemetry Collector
 
 ## Excluded Components
 
-Various components that are present in the standard Signal implementation have been excluded from the Flatline prototype. Some are security-enhancing or feature-specific components that are only excluded to keep the scope of the prototype constrained, while others are at odds with the goals of the Flatline project due to their purpose or due to being tightly coupled to specific commercial services or hardware.
+Various components that are present in the original Signal implementation have been excluded from the Flatline prototype. Some are security-enhancing or feature-specific components that are only excluded to keep the scope of the prototype constrained, while others are at odds with the goals of the Flatline project due to their purpose or due to being tightly coupled to specific commercial services or hardware.
 
 The following is a non-exhaustive list of important components that are excluded from the Flatline prototype.
 
@@ -141,6 +141,6 @@ In the Flatline prototype, the Molly application will fail to connect to the CDS
 
 ### Key Transparency Server & Auditor
 
-The [Key Transparency Server](https://github.com/signalapp/key-transparency-server) component, allows clients to verify that the public keys that they obtain from Flatline are in fact associated to the identity (e.g. the phone number) that they are attempting to communicate with. This is achieved by appending every public key update and its associated identity to a "globally consistent, cryptographically-protected, append-only log". The integrity of this log is verified and signed by the [Key Transparency Auditor](https://github.com/signalapp/key-transparency-auditor) component, which acts as a third-party auditor for the key transparency log. This feature has still not been officially announced and its sources were published after the development of Flatline began.
+The [Key Transparency Server](https://github.com/signalapp/key-transparency-server) component allows clients to verify that the public keys that they obtain from Flatline are in fact associated to the identity (e.g. the phone number) that they are attempting to communicate with. This is achieved by appending every public key update and its associated identity to a "globally consistent, cryptographically-protected, append-only log". The integrity of this log is verified and signed by the [Key Transparency Auditor](https://github.com/signalapp/key-transparency-auditor) component, which acts as a third-party auditor for the key transparency log. This feature has still not been officially announced and its sources were published after the development of Flatline began.
 
-In the Flatline prototype, this component is not implemented in order to contain the scope of the prototype. At the time of writting, key transparency checks seem to be implemented in the clients but not yet enforced. As a result, Flatline is able to function without it. In the future, these components should be deployed and configured in Flatline in order to support clients eventually enforcing their usage.
+In the Flatline prototype, this component is not implemented in order to contain the scope of the prototype. At the time of writing, key transparency checks seem to be implemented in the clients but not yet enforced. As a result, Flatline is able to function without it. In the future, these components should be deployed and configured in Flatline in order to support clients eventually enforcing their usage.
