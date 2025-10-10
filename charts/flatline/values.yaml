@@ -158,10 +158,6 @@ whisperService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-registration-service"
       port: "{{ .Values.registrationService.service.ports.default.port }}"
-    keyTransparencyServer:
-      type: tcp
-      host: "{{ include \"common.fullname\" . }}-key-transparency-server"
-      port: "{{ .Values.keyTransparencyServer.service.ports.default.port }}"
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
@@ -265,7 +261,7 @@ registrationService:
       port: "{{ .componentValues.service.ports.default.port }}"
 # contactDiscoveryService defines the values for the Contact Discovery Service component.
 contactDiscoveryService:
-  enabled: true
+  enabled: false # This component is disabled by default. It requires running on Intel SGX hardware.
   image:
     repository: ghcr.io/mollyim/flatline-contact-discovery-service
     tag: main
@@ -277,66 +273,6 @@ contactDiscoveryService:
       default:
         port: 8080
         protocol: TCP
-  # env defines the environment variables passed to the container.
-  # In this chart, environment variable values are treated as Helm templates.
-  env:
-    - name: _JAVA_OPTIONS
-      value: -Dmicronaut.environments=dev
-    - name: SGX_MODE
-      # Run SGX in simulation mode.
-      value: SIM
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
-# keyTransparencyServer defines the values for the Key Transparency Server component.
-keyTransparencyServer:
-  enabled: true
-  image:
-    repository: ghcr.io/mollyim/flatline-key-transparency-server
-    tag: main
-    pullPolicy: Always
-  replicas: 1
-  container:
-    command: /bin/kt-server
-    # args defines the arguments passed to the entrypoint command.
-    # Each argument is treated as a Helm template.
-    args:
-      - -config
-      - /usr/share/kt/config.yaml
-  service:
-    type: ClusterIP
-    ports:
-      default:
-        port: 8080
-        protocol: TCP
-      rw:
-        port: 8082
-        protocol: TCP
-  # configMap defines a ConfigMap associated with the component.
-  # The contents of all entries are treated as Helm templates.
-  # Some sample files are bundled with the chart. These files are intended for development use only.
-  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
-  # Example: helm install dev . --set-file keyTransparencyServer.configMap.data.configuration=./custom.yaml
-  configMap:
-    data:
-      configuration: "{{ tpl (.Files.Get \"files/key-transparency-server/config.yaml\") . }}"
-  volumeMounts:
-    - name: config
-      readOnly: false
-      configMap:
-        name: "{{ include \"common.fullnameWithComponent\" . }}"
-        items:
-          - key: configuration
-            path: configuration
-            mountPath: /usr/share/kt/config.yaml
-            readOnly: true
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
