@@ -7,8 +7,6 @@ config:
 
 flowchart TD
     molly -->|Connects to| traefik
-    molly -->|Uploads/downloads from| cdn0
-    molly -->|Uploads/downloads from| cdn3
     lib -->|Connects to| traefik
 
     traefik -->|Routes to| whisper
@@ -18,12 +16,12 @@ flowchart TD
 
     whisper -->|Reads/writes to| redis
     whisper -->|Interfaces with| registration
-    whisper -.->|Authorizes for| cdn0
-    whisper -.->|Authorizes for| cdn3
     whisper -->|Reads/writes to| whisper-pre-key-store
     whisper -->|Reads/writes to| whisper-database
     whisper -->|Reads from| whisper-dynamic-config
     whisper -->|Writes to| otel
+    whisper -.->|Authorizes for| cdn0
+    whisper -.->|Authorizes for| cdn3
 
     storage -->|Reads/writes to| cbtemulator
     storage -.->|Authorizes for| cdn0
