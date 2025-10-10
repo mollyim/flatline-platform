@@ -4,7 +4,7 @@ This document describes the current architecture of the Flatline prototype in or
 
 Although this architecture description is based in the [Kubernetes](https://kubernetes.io/)-based installation provided for Flatline, it only references components that are specific to Flatline and does not attempt to detail how they are deployed in Kubernetes.
 
-Some design decisions for the prototype were influenced by our deployment, which targets a single-node [k3s](https://k3s.io/) cluster deployed with [Helm](https://helm.sh/).
+Some design decisions for the prototype were influenced by our chosen installation method, which uses [Helm](https://helm.sh/) and targets a single-node [k3s](https://k3s.io/) cluster.
 
 ## Diagram
 
