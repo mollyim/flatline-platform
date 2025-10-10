@@ -29,6 +29,7 @@ spec:
   entryPoints:
     - websecure
   routes:
+    {{- if .Values.whisperService.enabled }}
     - match: Host(`whisper.{{ $hostname }}`)
       kind: Rule
       services:
@@ -39,6 +40,8 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
           port: {{ .Values.whisperService.service.ports.admin.port }}
+    {{- end }}
+    {{- if .Values.storageService.enabled }}
     - match: Host(`storage.{{ $hostname }}`)
       kind: Rule
       services:
@@ -49,16 +52,22 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-storage-service
           port: {{ .Values.storageService.service.ports.admin.port }}
+    {{- end }}
+    {{- if .Values.contactDiscoveryService.enabled }}
     - match: Host(`cds.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-contact-discovery-service
           port: {{ .Values.contactDiscoveryService.service.ports.default.port }}
+    {{- end }}
+    {{- if .Values.tus.enabled }}
     - match: Host(`cdn-tus.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-tus
           port: {{ .Values.tus.service.ports.default.port }}
+    {{- end }}
+    {{- if .Values.localstack.enabled }}
     - match: Host(`cdn-s3.{{ $hostname }}`)
       kind: Rule
       services:
@@ -66,11 +75,7 @@ spec:
           port: {{ .Values.localstack.service.ports.default.port }}
       middlewares:
         - name: {{ include "common.fullnameWithComponent" $ctx }}-add-prefix-cdn-s3
-    - match: Host(`kt.{{ $hostname }}`)
-      kind: Rule
-      services:
-        - name: {{ include "common.fullname" . }}-key-transparency-server
-          port: {{ .Values.keyTransparencyServer.service.ports.default.port }}
+    {{- end }}
   tls:
     secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
     options:
@@ -80,6 +85,7 @@ spec:
 
 ---
 
+{{- if .Values.localstack.enabled }}
 apiVersion: traefik.io/v1alpha1
 kind: Middleware
 metadata:
@@ -87,6 +93,7 @@ metadata:
 spec:
   addPrefix:
     prefix: /whisper-service-cdn
+{{- end }}
 
 ---
 
