@@ -45,7 +45,7 @@ A [fork](https://github.com/mollyim/libsignal) of the original [libsignal](https
 
 The main component of Flatline. Clients communicate with it directly. It also provides clients with the necessary credentials to directly upload files to the [CDN0](#cdn0) and [CDN3](#cdn3) components.
 
-It expects to communicate with the propietary AWS DynamoDB and AWS S3 services, which in the Flatline prototype are emulated by [LocalStack](#localstack). Whisper relies on S3 to fetch [dynamic configuration](#whisper-dynamic-config) parameters and [device pre-keys](#whisper-pre-key-store) and relies on DynamoDB to host [several tables](#whisper-database)  used to keep most of its persistent state.
+It expects to communicate with the propietary AWS DynamoDB and AWS S3 services, which in the Flatline prototype are emulated by [LocalStack](#localstack). Whisper relies on DynamoDB to host [several tables](#whisper-database) used to keep most of its persistent state. It also relies on S3 to manage [device pre-keys](#whisper-pre-key-store) and fetch [dynamic configuration](#whisper-dynamic-configuration) parameters.
 
 For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the client registration process, Whisper communicates with the [Registration Service](#registration-service). In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
 
