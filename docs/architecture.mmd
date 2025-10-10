@@ -7,23 +7,25 @@ config:
 
 flowchart TD
     molly -->|Connects to| traefik
+    molly -->|Uploads/downloads from| cdn0
+    molly -->|Uploads/downloads from| cdn3
     lib -->|Connects to| traefik
 
-    traefik -->|Connects to| whisper
-    traefik -->|Connects to| storage
-    traefik -->|Connects to| cdn0
-    traefik -->|Connects to| cdn3
+    traefik -->|Routes to| whisper
+    traefik -->|Routes to| storage
+    traefik -->|Routes to| cdn0
+    traefik -->|Routes to| cdn3
 
-    whisper -->|Connects to| redis
-    whisper -->|Connects to| registration
+    whisper -->|Reads/writes to| redis
+    whisper -->|Interfaces with| registration
     whisper -.->|Authorizes for| cdn0
     whisper -.->|Authorizes for| cdn3
-    whisper -->|Connects to| whisper-pre-key-store
-    whisper -->|Connects to| whisper-database
-    whisper -->|Connects to| whisper-dynamic-config
-    whisper -->|Connects to| otel
+    whisper -->|Reads/writes to| whisper-pre-key-store
+    whisper -->|Reads/writes to| whisper-database
+    whisper -->|Reads from| whisper-dynamic-config
+    whisper -->|Writes to| otel
 
-    storage -->|Connects to| cbtemulator
+    storage -->|Reads/writes to| cbtemulator
     storage -.->|Authorizes for| cdn0
 
     subgraph molly["Molly (Flatline)"]

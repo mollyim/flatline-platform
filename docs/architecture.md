@@ -2,7 +2,9 @@
 
 This document describes the current architecture of the Flatline prototype in order to show the relationship between each of the main Flatline components and to explain their individual function. Additionally, this document discusses the choices regarding which components from the original Signal implementation were excluded from the Flatline prototype.
 
-Although this architecture description is based in the [Kubernetes](https://kubernetes.io/)-based installation provided for Flatline, it only references components that are specific to Flatline. However, it is worth mentioning that some choices were influenced by our choice to deploy Flatline with [Helm](https://helm.sh/) and to primarily target a single-node [k3s](https://k3s.io/) cluster.
+Although this architecture description is based in the [Kubernetes](https://kubernetes.io/)-based installation provided for Flatline, it only references components that are specific to Flatline and does not attempt to detail how they are deployed in Kubernetes.
+
+Some design decisions for the prototype were influenced by our deployment, which targets a single-node [k3s](https://k3s.io/) cluster deployed with [Helm](https://helm.sh/).
 
 ## Diagram
 
@@ -33,17 +35,17 @@ Although this architecture description is based in the [Kubernetes](https://kube
 
 #### Molly
 
-The [Molly](https://molly.im/) client. The version of Molly used with Flatline has been modified to use a [fork of libsignal](https://github.com/mollyim/libsignal) and to reference local Flatline endpoints to communicate with the required components. Although most communication with the core Flatline components will be performed by the Molly client, in some instances this communcation will be performed by [libsignal](https://github.com/signalapp/libsignal/) directly.
+The [Molly](https://molly.im/) client. The version of Molly used with Flatline has been modified to reference Flatline endpoints and to use a modified version of the fork of [libsignal](#libsignal) used by Molly. Although most communication with Flatline happens in the Molly application itself (JVM), some interactions are handled directly by [libsignal](#libsignal) (Rust), which Molly uses as a dependency.
 
 #### libsignal
 
-A [fork](https://github.com/mollyim/libsignal) of the original [libsignal](https://github.com/signalapp/libsignal/). For the Flatline prototype, the development environment has been modified to pin the Flatline development certificate and loopback network address to communicate with the [Whisper service](#whisper-service). Communication with other components excluded from the Flatline prototype like [Secure Value Recovery](#secure-value-recovery), the [Contact Discovery Service](#contact-discovery-service) or the [Key Transparency Server](#key-transparency-server--auditor) has been disabled for the development environment.
+A [fork](https://github.com/mollyim/libsignal) of the original [libsignal](https://github.com/signalapp/libsignal/) library, built in Rust but with bindings for Java, Node and Swift. For the Flatline prototype, the development environment has been modified to pin the Flatline development certificate and loopback network address to communicate with the [Whisper service](#whisper-service). Communication with other components excluded from the Flatline prototype like [Secure Value Recovery](#secure-value-recovery), the [Contact Discovery Service](#contact-discovery-service) or the [Key Transparency Server](#key-transparency-server--auditor) has been disabled for the development environment.
 
 ### Core
 
 #### Whisper Service
 
-The main component of Flatline. Clients communicate with it directly. It also provides clients with the necessary credentials to directly upload files to the [CDN0](#cdn0) and [CDN3](#cdn3) components.
+The main component of Flatline. Clients communicate with it directly over HTTPS or WebSocket requests. It exposes most of the backend APIs (e.g. accounts, devices, keys, profiles, messages...) used by clients and also provides clients with the necessary credentials to directly upload files to the [CDN0](#cdn0) and [CDN3](#cdn3) components.
 
 It expects to communicate with the propietary AWS DynamoDB and AWS S3 services, which in the Flatline prototype are emulated by [LocalStack](#localstack). Whisper relies on DynamoDB to host [several tables](#whisper-database) used to keep most of its persistent state. It also relies on S3 to manage [device pre-keys](#whisper-pre-key-store) and fetch [dynamic configuration](#whisper-dynamic-configuration) parameters.
 
