@@ -1,0 +1,50 @@
+---
+config:
+  theme: "neutral"
+  flowchart:
+    defaultRenderer: "elk"
+---
+
+flowchart TD
+    molly -->|Connects to| traefik
+    lib -->|Connects to| traefik
+
+    traefik -->|Routes to| whisper
+    traefik -->|Routes to| storage
+    traefik -->|Routes to| cdn0
+    traefik -->|Routes to| cdn3
+
+    whisper -->|Reads/writes to| redis
+    whisper -->|Interfaces with| registration
+    whisper -->|Reads/writes to| whisper-pre-key-store
+    whisper -->|Reads/writes to| whisper-database
+    whisper -->|Reads from| whisper-dynamic-config
+    whisper -->|Writes to| otel
+    whisper -.->|Authorizes for| cdn0
+    whisper -.->|Authorizes for| cdn3
+
+    storage -->|Reads/writes to| cbtemulator
+    storage -.->|Authorizes for| cdn0
+
+    subgraph molly["Molly (Flatline)"]
+        lib[libsignal]
+    end
+
+    subgraph localstack["LocalStack (AWS)"]
+        cdn0@{ shape: cyl, label: "CDN0<br>(S3)" }
+        whisper-database@{ shape: cyl, label: "Whisper<br>Database<br>(DynamoDB)" }
+        whisper-dynamic-config@{ shape: cyl, label: "Whisper<br>Dynamic Config<br>(S3)" }
+        whisper-pre-key-store@{ shape: cyl, label: "Whisper<br>Pre-Key Store<br>(S3)" }
+    end
+
+    subgraph "Flatline Prototype"
+        traefik[Traefik]
+        whisper[Whisper Service]
+        storage[Storage Service]
+        localstack[LocalStack]
+        registration[Registration<br>Service]
+        cdn3@{ shape: cyl, label: "CDN3<br>(tus)" }
+        redis@{ shape: cyl, label: "Redis<br>Cluster"}
+        cbtemulator@{ shape: cyl, label: "cbtemulator<br>(Bigtable)"}
+        otel["OpenTelemetry<br>Collector<br>(StatsD)"]
+    end
