@@ -343,6 +343,8 @@ localstack:
       whisper-service-dynamic-configuration: "{{ .Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\" }}"
       whisper-service-cloudformation: "{{ .Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\" }}"
       whisper-service-init-script: "{{ .Files.Get \"files/localstack/whisper-service-init.sh\" }}"
+      calling-service-cloudformation: "{{ .Files.Get \"files/localstack/calling-service-aws-cloudformation.yaml\" }}"
+      calling-service-init-script: "{{ .Files.Get \"files/localstack/calling-service-init.sh\" }}"
   volumeMounts:
     - name: config
       readOnly: false
@@ -361,6 +363,14 @@ localstack:
           - key: whisper-service-init-script
             path: whisper-service-init-script
             mountPath: /etc/localstack/init/ready.d/whisper-service-init.sh
+            readOnly: true
+          - key: calling-service-cloudformation
+            path: calling-service-cloudformation
+            mountPath: /opt/calling-service-aws-cloudformation.yaml
+            readOnly: true
+          - key: calling-service-init-script
+            path: calling-service-init-script
+            mountPath: /etc/localstack/init/ready.d/calling-service-init.sh
             readOnly: true
     - name: data
       mountPath: /var/lib/localstack
