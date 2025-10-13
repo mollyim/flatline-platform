@@ -35,7 +35,7 @@ Flatline is composed of multiple services organized under Flatline Platform as s
   - Repository: https://github.com/mollyim/flatline-contact-discovery-service
   - Upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
 
-Additionally, Flatline relies on other infrastructure components described in [its Helm chart](charts/flatline).
+For a more detailed description of all Flatline components, see the [architecture documentation](doc/architecture.md).
 
 ## Development
 
