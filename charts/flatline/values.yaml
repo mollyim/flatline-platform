@@ -283,6 +283,120 @@ contactDiscoveryService:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+# callingServiceFrontend defines the values for the Calling Service frontend component.
+# This component is required for multimedia calls.
+callingServiceFrontend:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-calling-service-frontend
+    tag: pr-47
+    pullPolicy: Always
+  replicas: 1
+  container:
+    command: calling_frontend
+    args:
+      - --region
+      - "{{ include \"common.fullname\" . }}" # This region is only used for tagging metrics and logs.
+      - --authentication-key
+      - "deaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddead" # TODO: Change if necessary.
+      - --zkparams
+      - "AAK51fKwiJcO4RksMY2NX9xgiYf2QAITLffSjPru/jRgMoq7H9g2lRsmWmg9tZLY0deP9bb/dd9DyGRBEXuZFxucayWQKBT96ZphTtMrw1451atuth13eaJuiYh66wpoZtDp12omXr33bWfcnw3tQIt/E902+BFo0Jxq4yvj1xNu6gkXRoKejLx+TNiZV9uJbe5PWG9ZveFvCbs1NbGrjG84Px9qzSZoDwpgW+s1g9cC97x7J91HL9COthgus2FAd1pJPucej4KQVAHDo6XJ8QfRX5iwhs6p0IUX57aI4H0RUsk0KhJxM8xyXaEg6WsIQ7fYk187AjfEDio5CCmRKkCKoBUfuP5UiDsyo0mIQhS5xv0f78VF6V7ELfcXkbjQHJ6aryweshNHyRPyIjPEW62cVgjOAhYtC2VfBhOD2MYy3h0TPaXPOvXqonhT4kSIAO5RfH+hBvWtAE1wnauki2bmvESqmUXkgAI5cd2v26O3W3EnTaQofkT9O9zpTsKcQ5ipLGrrGNWakCMgmr0sOpIHUZLbobruqKdeLnY+ootB4N70oZOUsQ1SQqjLqNri3fk8iGt92SXxVk154zs8Unaszg1ZkfMOI6Ik5+YysB+g/eGg3zDf3qBt1sNZAtNlHYRvMGPkGG5RExm8BMAsC6XTAdDOLljmaUoZKKsnI+Iq8Lx8ZEbtgBmwRpEn++n20TkoMwmdaD/Koq8iSXoPHWP+p9Pkiw8oYrQ6s6F9JSJLB/qwbbNak4EuSS/JSrtODrzC1oEjD24xq1U5j7yU61u2tmVy67z22sEzQufS5LVU2Ff379UZq0E7KIRFXn6OyjIrzyb+TsEHidib5hyxVGhw02lrL4AseV9mgFUgrd8bkWLhLtuAKXI6kIN4YejVAQ=="
+      - --version
+      - "1"
+      - --max-clients-per-call
+      - "50"
+      - --cleanup-interval-ms
+      - "10000"
+      - --regional-url-template
+      - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.default.port }}"
+      - --calling-server-url
+      - "http://{{ include \"common.fullname\" . }}-calling-service-backend:{{ .Values.callingServiceBackend.service.ports.default.port }}"
+      - --storage-table
+      - "Rooms"
+      - --storage-endpoint
+      - "http://{{ include \"common.fullname\" . }}-localstack:{{ .Values.localstack.service.ports.default.port }}"
+      - --storage-region
+      - "us-east-1"
+      - --internal-api-port
+      - "8100"
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 8080
+        protocol: TCP
+      api:
+        port: 8100
+        protocol: TCP
+  # waitForCompoenents defines the a map of component services to wait for during pod initialization.
+  # Both the host and the port for each container are treated as Helm templates.
+  waitForComponents:
+    localstack:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-localstack"
+      port: "{{ .Values.localstack.service.ports.default.port }}"
+    callingServiceBackend:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-calling-service-backend"
+      port: "{{ .Values.callingServiceBackend.service.ports.default.port }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
+# callingServiceBackend defines the values for the Calling Service backend component.
+# This component is required for multimedia calls.
+callingServiceBackend:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-calling-service-backend
+    tag: pr-47
+    pullPolicy: Always
+  replicas: 1
+  container:
+    command: calling_backend
+    args:
+      - --ice-candidate-ip
+      - "127.0.0.1" # TODO: Use host external IP address.
+      - --signaling-ip
+      - "127.0.0.1" # TODO: Use host external IP address.
+      - --ice-candidate-port-tcp
+      - "10000" # TODO: Remove if default.
+      - --inactivity-timeout-secs
+      - "60"
+      - --diagnostics-interval-secs
+      - "10"
+      - --approved-users-persistence-url
+      - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.api.port }}/v1/call-link-approvals"
+      - --remove-call-records-base-url
+      - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.api.port }}/v2/conference"
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 8080
+        protocol: TCP
+      ice-tcp:
+        port: 10000
+        protocol: TCP
+      ice-udp:
+        port: 10000
+        protocol: UDP
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 #
 #  Infrastructure Components
 #  These components provide functionality that Flatline requires.

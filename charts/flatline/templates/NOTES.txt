@@ -34,6 +34,9 @@ Since you have chosen to use the development Traefik resources, you can find the
 {{ if .Values.contactDiscoveryService.enabled -}}
 - Contact Discovery Service: https://cds.{{ .Values.traefikResources.hostname}}
 {{ end -}}
+{{ if .Values.callingServiceFrontend.enabled -}}
+- Calling Service: https://calling.{{ .Values.traefikResources.hostname}}
+{{ end -}}
 {{ if .Values.tus.enabled -}}
 - "CDN" based on tus: https://cdn-tus.{{ .Values.traefikResources.hostname}}
 {{ end -}}

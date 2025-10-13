@@ -60,6 +60,13 @@ spec:
         - name: {{ include "common.fullname" . }}-contact-discovery-service
           port: {{ .Values.contactDiscoveryService.service.ports.default.port }}
     {{- end }}
+    {{- if .Values.callingServiceFrontend.enabled }}
+    - match: Host(`calling.{{ $hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-calling-service-frontend
+          port: {{ .Values.callingServiceFrontend.service.ports.default.port }}
+    {{- end }}
     {{- if .Values.tus.enabled }}
     - match: Host(`cdn-tus.{{ $hostname }}`)
       kind: Rule
