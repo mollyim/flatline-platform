@@ -49,15 +49,15 @@ The main component of Flatline. Clients communicate with it directly over HTTPS 
 
 It expects to communicate with the propietary AWS DynamoDB and AWS S3 services, which in the Flatline prototype are emulated by [LocalStack](#localstack). Whisper relies on DynamoDB to host [several tables](#whisper-database) used to keep most of its persistent state. It also relies on S3 to manage [device pre-keys](#whisper-pre-key-store) and fetch [dynamic configuration](#whisper-dynamic-configuration) parameters.
 
-For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the client registration process, Whisper communicates with the [Registration Service](#registration-service). In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
+For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the client registration process, Whisper communicates with the [registration service](#registration-service). In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
 
 #### Storage Service
 
-The component that manages groups, including their membership and metadata. Clients communicate with it directly. It stores and retrieves its data from the propietary [Bigtable](https://cloud.google.com/bigtable/docs/overview) database, which in the Flatline prototype is emulated by the [cbtemulator](#cbtemulator) component. It also provides clients with the necessary credentials to upload group avatars to the S3-based [CDN0](#cdn0) component.
+The component that manages groups, including their membership and metadata. Clients communicate with it directly. It stores and retrieves its data from a Bigtable database, which in the Flatline prototype is emulated by the [cbtemulator](#cbtemulator) component. It also provides clients with the necessary credentials to upload group avatars to the S3-based [CDN0](#cdn0) component.
 
 #### Registration Service
 
-The component that verifies phone numbers by sending of a verification code via SMS or phone call. In the Flatline prototype, this component runs in development mode and does not actually send any codes. Its function in the prototype is mainly to act as a placeholder that [Whisper](#whisper-service) can interact with during registration and will accept any code that matches the last six digits of the registering phone number.
+The component that verifies phone numbers by sending a verification code via SMS or phone call. In the Flatline prototype, this component runs in development mode and does not actually send any codes. Its function in the prototype is mainly to act as a placeholder that [Whisper](#whisper-service) can interact with during registration and will accept any code that matches the last six digits of the registering phone number.
 
 In the future, it will be replaced by a service that registers users based on something other than a phone number.
 
@@ -65,19 +65,19 @@ In the future, it will be replaced by a service that registers users based on so
 
 #### Traefik
 
-In the Flatline prototype, Traefik acts as the reverse proxy, receiving TLS connections from clients, terminating those connections and establishing connections with the appropriate components based on the request hostname. It uses a single wildcard certificate which is pinned in various clients.
+In the Flatline prototype, Traefik acts as the reverse proxy, terminating TLS connections from clients and routing them to the appropriate components based on the request hostname. It also uses a middleware to add the appropriate [path-style prefix](https://docs.aws.amazon.com/AmazonS3/latest/userguide/VirtualHosting.html#virtual-hosted-style-access) to requests directed to the [CDN0](#cdn0) S3 bucket hosted in [LocalStack](#localstack). It uses a single wildcard certificate which is pinned in various clients.
 
 Traefik was used for this purpose due to the fact that it is bundled with [k3s](https://k3s.io/).
 
 #### LocalStack
 
-In the Flatline prototype, [LocalStack](https://github.com/localstack/localstack) is used to emulate various AWS services that components and clients originally depended on.
+In the Flatline prototype, [LocalStack](https://github.com/localstack/localstack) is used to emulate various [AWS](https://docs.aws.amazon.com/) resources that components and clients originally depended on.
 
 The required AWS resources are created during the initialization of LocalStack [via CloudFormation](../charts/flatline/files/localstack/whisper-service-aws-cloudformation.yaml). After the creation of those resources, the necessary S3 objects will be [uploaded](../charts/flatline/files/localstack/whisper-service-init.sh) using the `awslocal` tool.
 
 ##### Whisper Database
 
-This element is a DynamoDB database which stores most information related to [Whisper](#whisper-service), including accounts, profiles, messages and various public keys. In the Flatline prototype, DynamoDB is emulated using [LocalStack](https://github.com/localstack/localstack). The key schema, attribute definitions and indexes from each table in this database are inferred from the relevant storage class in the Whisper source code.
+This element is a DynamoDB database which stores most information related to [Whisper](#whisper-service), including accounts, profiles, messages and various public keys. The key schema, attribute definitions and indexes from each table in this database are inferred from the relevant storage class in the Whisper source code and configured [via CloudFormation](../charts/flatline/files/localstack/whisper-service-aws-cloudformation.yaml).
 
 ##### Whisper Dynamic Configuration
 
@@ -85,7 +85,7 @@ This element is an S3 bucket which stores a single YAML configuration file. This
 
 ##### Whisper Pre-Key Store
 
-This element is an S3 bucket where [Whisper](#whisper-service) stores device pre-keys that are also referenced in DynamoDB. These keys are uploaded by [Whisper](#whisper-service) on behalf of clients and requested by other clients who wish to initiate communication with a given account or phone number identity.
+This element is an S3 bucket where [Whisper](#whisper-service) stores device pre-keys that are referenced in DynamoDB. These keys are uploaded by [Whisper](#whisper-service) on behalf of clients and requested by other clients who wish to initiate communication with a given account or phone number identity.
 
 ##### CDN0
 
@@ -99,7 +99,7 @@ In the Flatline prototype, the CDN3 component consists on a [tusd](https://githu
 
 #### cbtemulator
 
-In the Flatline prototype, [cbtemulator](https://github.com/fullstorydev/emulators) is used to emulate Google's Bigtable database, which the [storage service](#storage-service) relies on for all persistent data. It was chosen over [Google's own emulator](https://cloud.google.com/bigtable/docs/emulator) due to the fact that, unlike Google's in-memory implementation, it supports filesystem storage and allows the component to survive restarts without losing its state.
+In the Flatline prototype, [cbtemulator](https://github.com/fullstorydev/emulators) is used to emulate Google's [Bigtable](https://cloud.google.com/bigtable/docs/overview) database, which the [storage service](#storage-service) relies on for all persistent data. It was chosen over [Google's own emulator](https://cloud.google.com/bigtable/docs/emulator) due to the fact that, unlike Google's in-memory implementation, it supports filesystem storage and allows the component to survive restarts without losing its state.
 
 The required tables and column families are created by an [initialization job](../charts/flatline/files/cbtemulator/init.sh.tpl) using the `gcloud` tool.
 
@@ -113,7 +113,7 @@ In the Flatline prototype, this cluster is initialized using an [initialization 
 
 The component that collects metrics from the [Whisper](#whisper-service) component, which would otherwise log an exception every time that telemetry would be attempted. This component replaces the [DogStatsD](https://docs.datadoghq.com/developers/dogstatsd/) agent that is used to report metrics to the commercial Datadog service in the original implementation.
 
-The Flatline prototype uses the StatsD receiver from the OpenTelemetry Collector in order to provide compatibility with the original implementation. In the prototype, the metrics collected are not sent anywhere for storage and are only printed to standard output for debugging.
+The Flatline prototype uses the StatsD receiver from the OpenTelemetry Collector in order to provide compatibility with the original implementation. In the prototype, the metrics collected are not sent anywhere for storage and are only printed for debugging.
 
 ## Excluded Components
 
