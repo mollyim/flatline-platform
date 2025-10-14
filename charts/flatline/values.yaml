@@ -300,7 +300,7 @@ callingServiceFrontend:
       - --authentication-key
       - "deaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddead" # TODO: Change if necessary.
       - --zkparams
-      - "AAK51fKwiJcO4RksMY2NX9xgiYf2QAITLffSjPru/jRgMoq7H9g2lRsmWmg9tZLY0deP9bb/dd9DyGRBEXuZFxucayWQKBT96ZphTtMrw1451atuth13eaJuiYh66wpoZtDp12omXr33bWfcnw3tQIt/E902+BFo0Jxq4yvj1xNu6gkXRoKejLx+TNiZV9uJbe5PWG9ZveFvCbs1NbGrjG84Px9qzSZoDwpgW+s1g9cC97x7J91HL9COthgus2FAd1pJPucej4KQVAHDo6XJ8QfRX5iwhs6p0IUX57aI4H0RUsk0KhJxM8xyXaEg6WsIQ7fYk187AjfEDio5CCmRKkCKoBUfuP5UiDsyo0mIQhS5xv0f78VF6V7ELfcXkbjQHJ6aryweshNHyRPyIjPEW62cVgjOAhYtC2VfBhOD2MYy3h0TPaXPOvXqonhT4kSIAO5RfH+hBvWtAE1wnauki2bmvESqmUXkgAI5cd2v26O3W3EnTaQofkT9O9zpTsKcQ5ipLGrrGNWakCMgmr0sOpIHUZLbobruqKdeLnY+ootB4N70oZOUsQ1SQqjLqNri3fk8iGt92SXxVk154zs8Unaszg1ZkfMOI6Ik5+YysB+g/eGg3zDf3qBt1sNZAtNlHYRvMGPkGG5RExm8BMAsC6XTAdDOLljmaUoZKKsnI+Iq8Lx8ZEbtgBmwRpEn++n20TkoMwmdaD/Koq8iSXoPHWP+p9Pkiw8oYrQ6s6F9JSJLB/qwbbNak4EuSS/JSrtODrzC1oEjD24xq1U5j7yU61u2tmVy67z22sEzQufS5LVU2Ff379UZq0E7KIRFXn6OyjIrzyb+TsEHidib5hyxVGhw02lrL4AseV9mgFUgrd8bkWLhLtuAKXI6kIN4YejVAQ=="
+      - "AMJqvmQRYwEGlm0MSy6QFPIAvgOVsqRASNX1meQyCOYHJFqxO8lITPkow5kmhPrsNbu9JhVfKFwesVSKhdZaqQko3IZlJZMqP7DDw0DgTWpdnYzSt0XBWT50DM1cw1nCUXXBZUiijdaFs+JRlTKdh54M7sf43pFxyMHlS3URH50LOeR8jVQKaUHi1bDP2GR9ZXp3Ot9Fsp0pM4D/vjL5PwoOUuzNNdpIqUSFhKVrtazwuHNn9ecHMsFsN0QPzByiDA8nhKcGpdzyWUvGjEDBvpKkBtqjo8QuXWjyS3jSl2oJ/Z4Fh3o2N1YfD2aWV/K88o+TN2/j2/k+KbaIZgmiWwppLU+SYGwthxdDfZgnbaaGT/vMYX9P5JlUWSuP3xIxDzPzxBEFho67BP0Pvux+0a5nEOEVEpfRSs61MMvwNXEKZtzkO0QFbOrFYrPntyb7ToqNi66OQNyTfl/J7kqFZg2MTm3CKjHTAIvVMFAGCIamsrT9sWXOtuNeMS94xazxDA==" # TODO: Replace this value by one matching server.
       - --version
       - "1"
       - --max-clients-per-call
@@ -454,11 +454,9 @@ localstack:
   # Example: helm install dev . --set-file localstack.configMap.data.whisper-service-dynamic-configuration=./custom.yaml
   configMap:
     data:
+      init-script: "{{ .Files.Get \"files/localstack/init.sh\" }}"
+      flatline-resources: "{{ .Files.Get \"files/localstack/flatline-resources.yaml\" }}"
       whisper-service-dynamic-configuration: "{{ .Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\" }}"
-      whisper-service-cloudformation: "{{ .Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\" }}"
-      whisper-service-init-script: "{{ .Files.Get \"files/localstack/whisper-service-init.sh\" }}"
-      calling-service-cloudformation: "{{ .Files.Get \"files/localstack/calling-service-aws-cloudformation.yaml\" }}"
-      calling-service-init-script: "{{ .Files.Get \"files/localstack/calling-service-init.sh\" }}"
   volumeMounts:
     - name: config
       readOnly: false
@@ -466,25 +464,17 @@ localstack:
         name: "{{ include \"common.fullnameWithComponent\" . }}"
         defaultMode: "0755"
         items:
+          - key: init-script
+            path: init-script
+            mountPath: /etc/localstack/init/ready.d/init.sh
+            readOnly: true
+          - key: flatline-resources
+            path: flatline-resources
+            mountPath: /opt/flatline-resources.yaml
+            readOnly: true
           - key: whisper-service-dynamic-configuration
             path: whisper-service-dynamic-configuration
             mountPath: /opt/whisper-service-dynamic-config-dev.yaml
-            readOnly: true
-          - key: whisper-service-cloudformation
-            path: whisper-service-cloudformation
-            mountPath: /opt/whisper-service-aws-cloudformation.yaml
-            readOnly: true
-          - key: whisper-service-init-script
-            path: whisper-service-init-script
-            mountPath: /etc/localstack/init/ready.d/whisper-service-init.sh
-            readOnly: true
-          - key: calling-service-cloudformation
-            path: calling-service-cloudformation
-            mountPath: /opt/calling-service-aws-cloudformation.yaml
-            readOnly: true
-          - key: calling-service-init-script
-            path: calling-service-init-script
-            mountPath: /etc/localstack/init/ready.d/calling-service-init.sh
             readOnly: true
     - name: data
       mountPath: /var/lib/localstack

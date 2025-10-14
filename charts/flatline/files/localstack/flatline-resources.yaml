@@ -1,7 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Flatline Whisper Service Infrastructure 
+Description: Flatline Resources 
 
 Resources:
+  #################################
+  # Resources for Whisper Service #
+  #################################
+
   WhisperServiceDynamicConfigBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -401,3 +405,34 @@ Resources:
       TimeToLiveSpecification:
         AttributeName: E
         Enabled: true
+
+  #################################
+  # Resources for Calling Service #
+  #################################
+
+  RoomsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Rooms
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: roomId
+          AttributeType: S
+        - AttributeName: recordType
+          AttributeType: S
+        - AttributeName: region
+          AttributeType: S
+      KeySchema:
+        - AttributeName: roomId
+          KeyType: HASH
+        - AttributeName: recordType
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: region-index
+          KeySchema:
+            - AttributeName: region
+              KeyType: HASH
+            - AttributeName: recordType
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
