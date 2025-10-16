@@ -6,7 +6,9 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
-  replicas: {{ .componentValues.replicas }}
+  replicas: {{ .componentValues.replicas | default "1" }}
+  strategy:
+    type: {{ .componentValues.strategy | default "RollingUpdate" }}
   selector:
     matchLabels:
       {{- include "common.selectorLabels" . | nindent 6 }}
@@ -22,6 +24,7 @@ spec:
         checksum/secret: {{ include "common.secretChecksum" . }}
         {{- end }}
     spec:
+      hostNetwork: {{ .componentValues.hostNetwork | default "false" }}
       initContainers:
       {{- if .componentValues.waitForComponents }}
         - name: wait-for-components
@@ -91,6 +94,7 @@ spec:
           {{- range $name, $p := .componentValues.service.ports }}
             - name: {{ $name }}
               containerPort: {{ $p.targetPort | default $p.port }}
+              protocol: {{ $p.protocol | default "TCP" }}
           {{- end }}
           {{- end }}
           {{- if .componentValues.volumeMounts }}

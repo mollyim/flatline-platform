@@ -298,9 +298,11 @@ callingServiceFrontend:
       - --region
       - "{{ include \"common.fullname\" . }}" # This region is only used for tagging metrics and logs.
       - --authentication-key
-      - "deaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddeaddead" # TODO: Change if necessary.
+      # Same as group.externalServiceSecret configured in storage service.
+      - "3f9b8e5f981f7d5b31d86e0ba883837fdd65e6ea375a698a28fa1f1e468a9a21"
       - --zkparams
-      - "AMJqvmQRYwEGlm0MSy6QFPIAvgOVsqRASNX1meQyCOYHJFqxO8lITPkow5kmhPrsNbu9JhVfKFwesVSKhdZaqQko3IZlJZMqP7DDw0DgTWpdnYzSt0XBWT50DM1cw1nCUXXBZUiijdaFs+JRlTKdh54M7sf43pFxyMHlS3URH50LOeR8jVQKaUHi1bDP2GR9ZXp3Ot9Fsp0pM4D/vjL5PwoOUuzNNdpIqUSFhKVrtazwuHNn9ecHMsFsN0QPzByiDA8nhKcGpdzyWUvGjEDBvpKkBtqjo8QuXWjyS3jSl2oJ/Z4Fh3o2N1YfD2aWV/K88o+TN2/j2/k+KbaIZgmiWwppLU+SYGwthxdDfZgnbaaGT/vMYX9P5JlUWSuP3xIxDzPzxBEFho67BP0Pvux+0a5nEOEVEpfRSs61MMvwNXEKZtzkO0QFbOrFYrPntyb7ToqNi66OQNyTfl/J7kqFZg2MTm3CKjHTAIvVMFAGCIamsrT9sWXOtuNeMS94xazxDA==" # TODO: Replace this value by one matching server.
+      # Same as callingZkConfig.serverSecret configured in Whisper service.
+      - "AMWhaRyvktoOYc8kkTAeb8urCwKtqiNnrpD3gcD9pn0BNWXwIAx/U6lRJSISUP0F4m+G4Pzrpk/WjyFMXbHuag+Up3cTD0zmVsTA9wPmfthbhwU1XseBLTlk+63MNQ3EWS8JYgbyWeSqFx0t+peN743xylkXyKxn6W5ltk1SKicIWLrf2ddW6MdBBtZUN1fO6wguwBIKxwNB6svSqEalsA2pklQF+otRhapkcQEKoI0zN/rq8yqklBYDrtGaKvTHB/pwontP+flig0cGCjOx11YwSe9JxKABRAdHzP7MVBEChwjuUzNBa1YWo3FbAyXRuQWYv6JwZzC87dkBzXplfwq6IZ/HGz3h2Vf+m++9nIGoIKeBv5MHxCUWeLctcp78C5F0BphW7DqtekJuZGfDDyF6rGxG4o47eQqI+WL+C5sCay60HjsqJCesqw9LqLbuDEbS1rdYSxOPtp6BbtISIAJjAx23PIF5mYAL/YRihaiXut4sYa5ziq6Bexe4HpuOCw=="
       - --version
       - "1"
       - --max-clients-per-call
@@ -311,6 +313,8 @@ callingServiceFrontend:
       - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.default.port }}"
       - --calling-server-url
       - "http://{{ include \"common.fullname\" . }}-calling-service-backend:{{ .Values.callingServiceBackend.service.ports.default.port }}"
+      - --backend-ip
+      - "10.43.242.167" # TODO: Remove this. Temporary.
       - --storage-table
       - "Rooms"
       - --storage-endpoint
@@ -358,15 +362,19 @@ callingServiceBackend:
     tag: pr-47
     pullPolicy: Always
   replicas: 1
+  hostNetwork: true
+  strategy: Recreate # Required due to host networking.
   container:
     command: calling_backend
     args:
       - --ice-candidate-ip
-      - "127.0.0.1" # TODO: Use host external IP address.
+      - "127.0.0.1" # TODO: Parametrize to address relative to client.
       - --signaling-ip
-      - "127.0.0.1" # TODO: Use host external IP address.
+      - "127.0.0.1" # TODO: Parametrize to address relative to client.
+      - --ice-candidate-port
+      - "9000" # TODO: Replace with default.
       - --ice-candidate-port-tcp
-      - "10000" # TODO: Remove if default.
+      - "9000" # TODO: Replace with default.
       - --inactivity-timeout-secs
       - "60"
       - --diagnostics-interval-secs
@@ -381,11 +389,11 @@ callingServiceBackend:
       default:
         port: 8080
         protocol: TCP
-      ice-tcp:
-        port: 10000
+      icetcp:
+        port: 9000
         protocol: TCP
-      ice-udp:
-        port: 10000
+      iceudp:
+        port: 9000
         protocol: UDP
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
@@ -683,6 +691,63 @@ redisCluster:
     failureThreshold: 60
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+# coturn defines the values for a TURN server used for WebRTC calling.
+# This component is required for multimedia calls.
+coturn:
+  enabled: true
+  image:
+    repository: docker.io/coturn/coturn
+    tag: 4.7.0-alpine
+    pullPolicy: IfNotPresent
+  replicas: 1
+  hostNetwork: true
+  strategy: Recreate # Required due to host networking.
+  service:
+    type: ClusterIP
+    ports:
+      turntcp:
+        port: 3478
+        protocol: TCP
+      turnudp:
+        port: 3478
+        protocol: UDP
+      turntlstcp:
+        port: 5349
+        protocol: TCP
+      turntlsudp:
+        port: 5349
+        protocol: UDP
+      relaytcp:
+        port: 49152
+        protocol: UDP
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file redisCluster.configMap.data.configuration=./custom.conf
+  configMap:
+    data:
+      configuration: "{{ .Files.Get \"files/coturn/turnserver.conf\" }}"
+  volumeMounts:
+    - name: config
+      readOnly: true
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
+        items:
+          - key: configuration
+            path: configuration
+            mountPath: /etc/coturn/turnserver.conf
+            readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 60
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.turntcp.port }}"
 # otelCollector defines the values for an OpenTelemetry collector.
 # A collector compatible with StatsD is required by the Whisper Service component.
 # Disable this component to use an existing StatsD collector.

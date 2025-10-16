@@ -523,15 +523,6 @@ turn:
     clientCredentialTtl: PT12H
     hostname: turn.cloudflare.example.com
     numHttpClients: 1
-  coturn:
-    hostname: {{ include "common.fullname" . }}-coturn
-    staticAuthSecret: secret://turn.coturn.apiToken
-    urls:
-      - turn:turn.example.com:80
-    urlsWithIps:
-      - turn:%s
-      - turn:%s:80?transport=tcp
-    clientCredentialTtl: PT12H
 
 linkDevice:
   secret: secret://linkDevice.secret
