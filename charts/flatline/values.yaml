@@ -1,6 +1,16 @@
 # global defines shared values for this chart and its dependencies.
 global:
+  # defaultStorageClass defines the default storage class used to create volumes for Flatline. Optional.
+  # When not set, the default storage class configured for the cluster will be used.
   defaultStorageClass: ""
+  # hostname defines the DNS name that clients will use to connect to Flatline. Required.
+  # This name is used to perform subdomain-based routing and must match the certificate used in Traefik.
+  # The default value, "flatline.internal", assumes a local mechanism of resolving the name.
+  hostname: flatline.internal
+  # advertisedAddress defines the address through which clients can reach the host running Flatline. Required.
+  # This address used by components related to multimedia calling which must advertise their address to clients.
+  # The default value, "10.0.2.2", assumes clients running on the Android Emulator and Flatline on the host.
+  advertisedAddress: "10.0.2.2"
 # common defines shared values for this chart.
 common:
   # defaultInitContainer defines the values to be used by default in various init containers.
@@ -314,7 +324,7 @@ callingServiceFrontend:
       - --calling-server-url
       - "http://{{ include \"common.fullname\" . }}-calling-service-backend:{{ .Values.callingServiceBackend.service.ports.default.port }}"
       - --backend-ip
-      - "10.43.242.167" # TODO: Remove this. Temporary.
+      - "10.43.239.183" # TODO: Remove this. Temporary.
       - --storage-table
       - "Rooms"
       - --storage-endpoint
@@ -352,7 +362,7 @@ callingServiceFrontend:
     timeoutSeconds: 1
     failureThreshold: 10
     tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
+      port: "{{ .componentValues.service.ports.api.port }}"
 # callingServiceBackend defines the values for the Calling Service backend component.
 # This component is required for multimedia calls.
 callingServiceBackend:
@@ -368,13 +378,13 @@ callingServiceBackend:
     command: calling_backend
     args:
       - --ice-candidate-ip
-      - "127.0.0.1" # TODO: Parametrize to address relative to client.
+      - "{{ .Values.global.advertisedAddress }}"
       - --signaling-ip
-      - "127.0.0.1" # TODO: Parametrize to address relative to client.
+      - "{{ .Values.global.advertisedAddress }}"
       - --ice-candidate-port
-      - "9000" # TODO: Replace with default.
+      - "10000"
       - --ice-candidate-port-tcp
-      - "9000" # TODO: Replace with default.
+      - "10000"
       - --inactivity-timeout-secs
       - "60"
       - --diagnostics-interval-secs
@@ -390,10 +400,10 @@ callingServiceBackend:
         port: 8080
         protocol: TCP
       icetcp:
-        port: 9000
+        port: 10000
         protocol: TCP
       iceudp:
-        port: 9000
+        port: 10000
         protocol: UDP
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
@@ -724,10 +734,10 @@ coturn:
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
   # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
-  # Example: helm install dev . --set-file redisCluster.configMap.data.configuration=./custom.conf
+  # Example: helm install dev . --set-file coturn.configMap.data.configuration=./custom.conf
   configMap:
     data:
-      configuration: "{{ .Files.Get \"files/coturn/turnserver.conf\" }}"
+      configuration: "{{ tpl (.Files.Get \"files/coturn/turnserver.conf.tpl\") . }}"
   volumeMounts:
     - name: config
       readOnly: true
@@ -804,8 +814,6 @@ otelCollector:
 # Disable this component to use a different ingress gateway.
 traefikResources:
   enabled: true
-  # hostname configures the DNS name that will be used to access Flatline. Required.
-  hostname: flatline.localhost
   # chart references the existing Traefik chart. Optional.
   chart:
     # name references the name of the Traefik chart that is installed. Optional.
@@ -827,8 +835,8 @@ traefikResources:
   secret:
     type: kubernetes.io/tls
     stringData:
-      tls.crt: "{{ .Files.Get \"files/traefik/wildcard-localhost.pem\" }}"
-      tls.key: "{{ .Files.Get \"files/traefik/wildcard-localhost.key.pem\" }}"
+      tls.crt: "{{ .Files.Get \"files/traefik/wildcard-internal.pem\" }}"
+      tls.key: "{{ .Files.Get \"files/traefik/wildcard-internal.key.pem\" }}"
   # tls configures how Traefik will terminate TLS connections to Flatline. Required.
   tls:
     # secretName can be used to reference an existing Kubernetes TLS secret with "tls.crt" and "tls.key" items.

@@ -24,24 +24,24 @@ $ kubectl wait --timeout=5m -n {{ .Release.Namespace }} deployment/{{ include "c
 Since you have chosen to use the development Traefik resources, you can find the relevant Flatline endpoints here:
 
 {{ if .Values.whisperService.enabled -}}
-- Whisper Service: https://whisper.{{ .Values.traefikResources.hostname}}
-- Whisper Service Admin: https://whisper-admin.{{ .Values.traefikResources.hostname}}
+- Whisper Service: https://whisper.{{ .Values.global.hostname }}
+- Whisper Service Admin: https://whisper-admin.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.storageService.enabled -}}
-- Storage Service: https://storage.{{ .Values.traefikResources.hostname}}
-- Storage Service Admin: https://storage-admin.{{ .Values.traefikResources.hostname}}
+- Storage Service: https://storage.{{ .Values.global.hostname }}
+- Storage Service Admin: https://storage-admin.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.contactDiscoveryService.enabled -}}
-- Contact Discovery Service: https://cds.{{ .Values.traefikResources.hostname}}
+- Contact Discovery Service: https://cds.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.callingServiceFrontend.enabled -}}
-- Calling Service: https://calling.{{ .Values.traefikResources.hostname}}
+- Calling Service: https://calling.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.tus.enabled -}}
-- "CDN" based on tus: https://cdn-tus.{{ .Values.traefikResources.hostname}}
+- "CDN" based on tus: https://cdn-tus.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.localstack.enabled -}}
-- "CDN" based on S3: https://cdn-s3.{{ .Values.traefikResources.hostname}}
+- "CDN" based on S3: https://cdn-s3.{{ .Values.global.hostname }}
 {{ end -}}
 {{ else -}}
 Since you have chosen to use your own ingress gateway, ensure that the relevant Flatline endpoints are exposed:

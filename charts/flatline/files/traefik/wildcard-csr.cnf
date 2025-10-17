@@ -6,7 +6,7 @@ default_md = sha256
 
 [dn]
 O = Flatline Dev
-CN = *.flatline.localhost
+CN = *.flatline.internal
 
 [req_ext]
-subjectAltName = DNS:*.flatline.localhost,DNS:flatline.localhost
+subjectAltName = DNS:*.flatline.internal,DNS:flatline.internal

@@ -5,8 +5,8 @@ lt-cred-mech
 realm=flatline
 user=flatline:flatline
 
-relay-ip=127.0.0.1
 relay-threads=0
+external-ip={{ .Values.global.advertisedAddress }}
 
 min-port=30000
 max-port=60000
