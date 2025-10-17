@@ -25,6 +25,9 @@ jobs:
           - name: Contact Discovery Service
             repo: mollyim/flatline-contact-discovery-service
             upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
+          - name: Calling Service
+            repo: mollyim/flatline-calling-service
+            upstream: https://github.com/signalapp/Signal-Calling-Service
     steps:
       - name: Checkout Upstream Branch 
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

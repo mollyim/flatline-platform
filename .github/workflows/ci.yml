@@ -7,6 +7,7 @@ on:
       - 'flatline-storage-service'
       - 'flatline-registration-service'
       - 'flatline-contact-discovery-service'
+      - 'flatline-calling-service'
       - '.github/workflows/ci.yml'
   push:
     branches:
@@ -16,6 +17,7 @@ on:
       - 'flatline-storage-service'
       - 'flatline-registration-service'
       - 'flatline-contact-discovery-service'
+      - 'flatline-calling-service'
       - '.github/workflows/ci.yml'
 
 env:
@@ -33,7 +35,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: flatline-whisper-service 
+        working-directory: flatline-whisper-service
     services:
       foundationdb0:
         # Should be the same as the client version or close behind.
@@ -134,7 +136,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: flatline-storage-service 
+        working-directory: flatline-storage-service
     steps:
       - *install-git
       - *checkout-sources
@@ -159,7 +161,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: flatline-registration-service 
+        working-directory: flatline-registration-service
     steps:
       - *install-git
       - *checkout-sources
@@ -182,7 +184,7 @@ jobs:
     timeout-minutes: 20
     defaults:
       run:
-        working-directory: flatline-contact-discovery-service 
+        working-directory: flatline-contact-discovery-service
     steps:
       - *checkout-sources
       - name: Set up JDK 24
@@ -209,6 +211,33 @@ jobs:
             -Djib.to.auth.username=${{ github.token }} \
             -Djib.to.auth.password=${{ github.token }}
 
+  calling-service:
+    name: Calling Service
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-calling-service
+    steps:
+      - *checkout-sources
+      - *determine-container-image-tag
+      - name: Build Container Image for Frontend
+        # TODO(uoemai): Build container image for CPU families other than "skylake".
+        run: |
+          docker build . -f frontend/Dockerfile --build-arg rust_flags=-Ctarget-cpu=skylake -t calling-frontend
+          docker tag calling-frontend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-frontend:${{ steps.tag.outputs.tag }}"
+          docker tag calling-frontend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-frontend:${{ steps.tag.outputs.extra-tags }}"
+          echo "${{ github.token }}" | docker login ghcr.io -u=${{ github.actor }} --password-stdin
+          docker push --all-tags "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-frontend"
+      - name: Build Container Image for Backend
+        # TODO(uoemai): Build container image for CPU families other than "skylake".
+        run: |
+          docker build . -f backend/Dockerfile --build-arg rust_flags=-Ctarget-cpu=skylake -t calling-backend
+          docker tag calling-backend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-backend:${{ steps.tag.outputs.tag }}"
+          docker tag calling-backend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-backend:${{ steps.tag.outputs.extra-tags }}"
+          echo "${{ github.token }}" | docker login ghcr.io -u=${{ github.actor }} --password-stdin
+          docker push --all-tags "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-backend"
+
   helm:
     name: Helm Test Images
     needs:
@@ -216,6 +245,7 @@ jobs:
       - storage-service
       - registration-service
       - contact-discovery-service
+      - calling-service
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     steps:
@@ -253,4 +283,5 @@ jobs:
             --set=whisperService.image.tag=$tag \
             --set=storageService.image.tag=$tag \
             --set=registrationService.image.tag=$tag \
-            --set=contactDiscoveryService.image.tag=$tag"
+            --set=contactDiscoveryService.image.tag=$tag \
+            --set=callingService.image.tag=$tag"

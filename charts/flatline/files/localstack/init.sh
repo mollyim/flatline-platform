@@ -2,7 +2,7 @@
 set -e
 
 awslocal cloudformation deploy \
-  --stack-name whisper-service \
-  --template-file /opt/whisper-service-aws-cloudformation.yaml
+  --stack-name flatline \
+  --template-file /opt/flatline-resources.yaml
 
 awslocal s3 cp /opt/whisper-service-dynamic-config-dev.yaml s3://whisper-service-dynamic-config/dev.yml
