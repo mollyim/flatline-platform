@@ -712,6 +712,10 @@ coturn:
   replicas: 1
   hostNetwork: true
   strategy: Recreate # Required due to host networking.
+  container:
+    command: docker-entrypoint.sh
+    args:
+      - --log-file=stdout
   service:
     type: ClusterIP
     ports:
