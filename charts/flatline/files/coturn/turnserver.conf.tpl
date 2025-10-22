@@ -5,10 +5,13 @@ lt-cred-mech
 realm=flatline
 user=flatline:flatline
 
-relay-threads=0
+fingerprint
+
+listening-ip=0.0.0.0
+relay-ip=0.0.0.0
 external-ip={{ .Values.global.advertisedAddress }}
 
 min-port=30000
-max-port=60000
+max-port=40000
 
 verbose

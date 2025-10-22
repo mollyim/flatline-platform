@@ -323,8 +323,6 @@ callingServiceFrontend:
       - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.default.port }}"
       - --calling-server-url
       - "http://{{ include \"common.fullname\" . }}-calling-service-backend:{{ .Values.callingServiceBackend.service.ports.default.port }}"
-      - --backend-ip
-      - "10.43.239.183" # TODO: Remove this. Temporary.
       - --storage-table
       - "Rooms"
       - --storage-endpoint
