@@ -175,7 +175,7 @@ whisperService:
     initialDelaySeconds: 1
     periodSeconds: 1
     timeoutSeconds: 1
-    failureThreshold: 10
+    failureThreshold: 20
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
 # storageService defines the values for the Storage Service component.
@@ -394,6 +394,7 @@ callingServiceBackend:
   service:
     type: ClusterIP
     ports:
+      # These ports are only for reference, as this component uses the host network.
       default:
         port: 8080
         protocol: TCP
@@ -717,21 +718,14 @@ coturn:
   service:
     type: ClusterIP
     ports:
+      # These ports are only for reference, as this component uses the host network.
       turntcp:
         port: 3478
         protocol: TCP
       turnudp:
         port: 3478
         protocol: UDP
-      turntlstcp:
-        port: 5349
-        protocol: TCP
-      turntlsudp:
-        port: 5349
-        protocol: UDP
-      relaytcp:
-        port: 49152
-        protocol: UDP
+      # Additional ports 49152 to 65535 UDP used as relay endpoints.
   # configMap defines a ConfigMap associated with the component.
   # The contents of all entries are treated as Helm templates.
   # Some sample files are bundled with the chart. These files are intended for development use only.
