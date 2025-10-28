@@ -214,6 +214,8 @@ jobs:
   calling-service:
     name: Calling Service
     runs-on: ubuntu-22.04
+    env:
+      TARGET_CPU: skylake
     timeout-minutes: 20
     defaults:
       run:
@@ -222,17 +224,15 @@ jobs:
       - *checkout-sources
       - *determine-container-image-tag
       - name: Build Container Image for Frontend
-        # TODO(uoemai): Build container image for CPU families other than "skylake".
         run: |
-          docker build . -f frontend/Dockerfile --build-arg rust_flags=-Ctarget-cpu=skylake -t calling-frontend
+          docker build . -f frontend/Dockerfile --build-arg rust_flags=-Ctarget-cpu=$TARGET_CPU -t calling-frontend
           docker tag calling-frontend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-frontend:${{ steps.tag.outputs.tag }}"
           docker tag calling-frontend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-frontend:${{ steps.tag.outputs.extra-tags }}"
           echo "${{ github.token }}" | docker login ghcr.io -u=${{ github.actor }} --password-stdin
           docker push --all-tags "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-frontend"
       - name: Build Container Image for Backend
-        # TODO(uoemai): Build container image for CPU families other than "skylake".
         run: |
-          docker build . -f backend/Dockerfile --build-arg rust_flags=-Ctarget-cpu=skylake -t calling-backend
+          docker build . -f backend/Dockerfile --build-arg rust_flags=-Ctarget-cpu=$TARGET_CPU -t calling-backend
           docker tag calling-backend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-backend:${{ steps.tag.outputs.tag }}"
           docker tag calling-backend "ghcr.io/${{ github.repository_owner }}/flatline-calling-service-backend:${{ steps.tag.outputs.extra-tags }}"
           echo "${{ github.token }}" | docker login ghcr.io -u=${{ github.actor }} --password-stdin
