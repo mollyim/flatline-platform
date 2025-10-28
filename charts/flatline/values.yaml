@@ -299,7 +299,7 @@ callingServiceFrontend:
   enabled: true
   image:
     repository: ghcr.io/mollyim/flatline-calling-service-frontend
-    tag: pr-47
+    tag: main
     pullPolicy: Always
   replicas: 1
   container:
@@ -367,7 +367,7 @@ callingServiceBackend:
   enabled: true
   image:
     repository: ghcr.io/mollyim/flatline-calling-service-backend
-    tag: pr-47
+    tag: main
     pullPolicy: Always
   replicas: 1
   hostNetwork: true
