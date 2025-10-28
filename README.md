@@ -34,6 +34,10 @@ Flatline is composed of multiple services organized under Flatline Platform as s
   - Submodule: `flatline-contact-discovery-service`
   - Repository: https://github.com/mollyim/flatline-contact-discovery-service
   - Upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
+- **Calling Service**
+  - Submodule: `flatline-calling-service`
+  - Repository: https://github.com/mollyim/flatline-calling-service
+  - Upstream: https://github.com/signalapp/Signal-Calling-Service
 
 For a more detailed description of all Flatline components, see the [architecture documentation](docs/architecture.md).
 
@@ -49,9 +53,9 @@ git clone --recurse-submodules git@github.com:mollyim/flatline-platform.git
 
 Testing and building this project relies on [Docker](https://docs.docker.com/engine/install/).
 
-This project is intended to be built with the [Temurin 24 JDK](https://adoptium.net/installation/).
+The Java compoments are intended to be built with the [Temurin 24 JDK](https://adoptium.net/installation/).
 
-For the following commands to succeed, ensure that `JAVA_HOME` points to a valid Temurin 24 JDK installation.
+For the Maven builds to succeed, ensure that `JAVA_HOME` points to a valid Temurin 24 JDK installation.
 
 ### Testing
 
@@ -117,10 +121,21 @@ sudo ./c/docker/sgx_runtime_libraries.sh
 ./mvnw verify
 ```
 
+#### Calling Service
+
+This component is built in Rust and requires its toolchain.
+
+```bash
+cd flatline-calling-service
+cargo test
+```
+
 ### Building
 
-In addition to the JAR artifacts, this stage will build and locally store container images with
-[Jib](https://github.com/GoogleContainerTools/jib).
+For Java components, this stage will build and locally store container images with
+[Jib](https://github.com/GoogleContainerTools/jib), in addition to the JAR artifacts.
+
+For other components, the provided Dockerfiles will be used instead.
 
 #### Whisper Service
 
@@ -161,6 +176,21 @@ cd flatline-contact-discovery-service
   -Dpackaging=docker -DskipTests \
   -Djib.to.image="flatline-contact-discovery-service:dev"
 ```
+
+#### Calling Service
+
+```bash
+cd flatline-calling-service
+TARGET_CPU=skylake # The target CPU family used to run the component.
+docker build . -f frontend/Dockerfile \
+  --build-arg rust_flags=-Ctarget-cpu=$TARGET_CPU \
+  -t flatline-calling-service-frontend:dev
+docker build . -f backend/Dockerfile \
+  --build-arg rust_flags=-Ctarget-cpu=$TARGET_CPU \
+  -t flatline-calling-service-backend:dev
+```
+
+The component should run on the target CPU family and others that support its features.
 
 ### Running with Kubernetes
 
@@ -285,6 +315,19 @@ When building with Maven, push the resulting container images to a registry. For
   -Djib.to.image=localhost:5000/flatline-contact-discovery-service:dev \
   -Djib.allowInsecureRegistries=true
 )
+
+# Calling Service
+(
+  cd flatline-calling-service
+  docker build . -f frontend/Dockerfile \
+    --build-arg rust_flags=-Ctarget-cpu=skylake \
+    -t localhost:5000/flatline-calling-service-frontend:dev
+  docker push localhost:5000/flatline-calling-service-frontend:dev
+  docker build . -f backend/Dockerfile \
+    --build-arg rust_flags=-Ctarget-cpu=skylake \
+    -t localhost:5000/flatline-calling-service-backend:dev
+  docker push localhost:5000/flatline-calling-service-backend:dev
+)
 ```
 
 Once the images are on the registry, override the Helm image values to reference these images.
@@ -307,6 +350,14 @@ registrationService:
 contactDiscoveryService:
   image:
     repository: localhost:5000/flatline-contact-discovery-service
+    tag: dev
+callingServiceFrontend:
+  image:
+    repository: localhost:5000/flatline-calling-service-frontend
+    tag: dev
+callingServiceBackend:
+  image:
+    repository: localhost:5000/flatline-calling-service-backend
     tag: dev
 ```
 
