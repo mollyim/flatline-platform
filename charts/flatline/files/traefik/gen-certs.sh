@@ -84,23 +84,23 @@ fi
 
 if $CREATE_CERT; then
   # Delete previous certificate.
-  rm -f wildcard-localhost.pem wildcard-localhost.key.pem wildcard-localhost.csr
+  rm -f wildcard-internal.pem wildcard-internal.key.pem wildcard-internal.csr
 
   # Create wildcard certificate key and CSR.
-  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out wildcard-localhost.key.pem
-  chmod 600 wildcard-localhost.key.pem
-  openssl req -new -key wildcard-localhost.key.pem -out wildcard-localhost.csr -config wildcard-csr.cnf
+  openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:4096 -out wildcard-internal.key.pem
+  chmod 600 wildcard-internal.key.pem
+  openssl req -new -key wildcard-internal.key.pem -out wildcard-internal.csr -config wildcard-csr.cnf
 
   # Issue wildcard certificate from CSR with CA.
-  openssl x509 -req -in wildcard-localhost.csr -CA ca.pem -CAkey ca.key.pem \
-    -out wildcard-localhost.pem -days 3650 -sha256 -extfile wildcard-ext.cnf
+  openssl x509 -req -in wildcard-internal.csr -CA ca.pem -CAkey ca.key.pem \
+    -out wildcard-internal.pem -days 3650 -sha256 -extfile wildcard-ext.cnf
 fi
 
 if [ -n "$BC_PATH" ]; then
   # Store certificate in a BKSv1 file as expected by the Whisper client.
   keytool -importcert \
     -alias whisper \
-    -file wildcard-localhost.pem \
+    -file wildcard-internal.pem \
     -keystore whisper.store \
     -storetype BKS \
     -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
@@ -110,5 +110,5 @@ fi
 
 if [ -n "$P12_PASS" ]; then
   # Store certificate in a PKCS#12 file.
-  openssl pkcs12 -export -password pass:$P12_PASS -inkey wildcard-localhost.key.pem -in wildcard-localhost.pem -out wildcard-localhost.p12
+  openssl pkcs12 -export -password pass:$P12_PASS -inkey wildcard-internal.key.pem -in wildcard-internal.pem -out wildcard-internal.p12
 fi

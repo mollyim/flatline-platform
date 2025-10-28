@@ -510,19 +510,18 @@ keyTransparencyService:
   clientPrivateKey: secret://keyTransparencyService.clientPrivateKey
 
 turn:
-  cloudflare:
-    apiToken: secret://turn.cloudflare.apiToken
-    endpoint: https://rtc.live.cloudflare.com/v1/turn/keys/LMNOP/credentials/generate
+  # FLT(uoemai): The Flatline prototype uses Coturn as a self-hosted replacement for Cloudflare.
+  coturn:
+    # FLT(uoemai): This secret must match the static-auth-secret configured in Coturn.
+    secret: secret://turn.coturn.secret
     urls:
-      - turn:turn.example.com:80
+      - turn:turn.{{ .Values.global.hostname }}:3478
     urlsWithIps:
       - turn:%s
-      - turn:%s:80?transport=tcp
-      - turns:%s:443?transport=tcp
-    requestedCredentialTtl: PT24H
+      - turn:%s:3478?transport=tcp
+    credentialTtl: PT24H
     clientCredentialTtl: PT12H
-    hostname: turn.cloudflare.example.com
-    numHttpClients: 1
+    hostname: turn.{{ .Values.global.hostname }}
 
 linkDevice:
   secret: secret://linkDevice.secret

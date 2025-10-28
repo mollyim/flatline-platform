@@ -1,6 +1,16 @@
 # global defines shared values for this chart and its dependencies.
 global:
+  # defaultStorageClass defines the default storage class used to create volumes for Flatline. Optional.
+  # When not set, the default storage class configured for the cluster will be used.
   defaultStorageClass: ""
+  # hostname defines the DNS name that clients will use to connect to Flatline. Required.
+  # This name is used to perform subdomain-based routing and must match the certificate used in Traefik.
+  # The default value, "flatline.internal", assumes a local mechanism of resolving the name.
+  hostname: flatline.internal
+  # advertisedAddress defines the address through which clients can reach the host running Flatline. Required.
+  # This address used by components related to multimedia calling which must advertise their address to clients.
+  # The default value, "10.0.2.2", assumes clients running on the Android Emulator and Flatline on the host.
+  advertisedAddress: "10.0.2.2"
 # common defines shared values for this chart.
 common:
   # defaultInitContainer defines the values to be used by default in various init containers.
@@ -165,7 +175,7 @@ whisperService:
     initialDelaySeconds: 1
     periodSeconds: 1
     timeoutSeconds: 1
-    failureThreshold: 10
+    failureThreshold: 20
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
 # storageService defines the values for the Storage Service component.
@@ -283,6 +293,127 @@ contactDiscoveryService:
     failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+# callingServiceFrontend defines the values for the Calling Service frontend component.
+# This component is required for multimedia calls.
+callingServiceFrontend:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-calling-service-frontend
+    tag: main
+    pullPolicy: Always
+  replicas: 1
+  container:
+    command: calling_frontend
+    args:
+      - --region
+      - "{{ include \"common.fullname\" . }}" # This region is only used for tagging metrics and logs.
+      - --authentication-key
+      # Same as group.externalServiceSecret configured in storage service.
+      - "3f9b8e5f981f7d5b31d86e0ba883837fdd65e6ea375a698a28fa1f1e468a9a21"
+      - --zkparams
+      # Same as callingZkConfig.serverSecret configured in Whisper service.
+      - "AMWhaRyvktoOYc8kkTAeb8urCwKtqiNnrpD3gcD9pn0BNWXwIAx/U6lRJSISUP0F4m+G4Pzrpk/WjyFMXbHuag+Up3cTD0zmVsTA9wPmfthbhwU1XseBLTlk+63MNQ3EWS8JYgbyWeSqFx0t+peN743xylkXyKxn6W5ltk1SKicIWLrf2ddW6MdBBtZUN1fO6wguwBIKxwNB6svSqEalsA2pklQF+otRhapkcQEKoI0zN/rq8yqklBYDrtGaKvTHB/pwontP+flig0cGCjOx11YwSe9JxKABRAdHzP7MVBEChwjuUzNBa1YWo3FbAyXRuQWYv6JwZzC87dkBzXplfwq6IZ/HGz3h2Vf+m++9nIGoIKeBv5MHxCUWeLctcp78C5F0BphW7DqtekJuZGfDDyF6rGxG4o47eQqI+WL+C5sCay60HjsqJCesqw9LqLbuDEbS1rdYSxOPtp6BbtISIAJjAx23PIF5mYAL/YRihaiXut4sYa5ziq6Bexe4HpuOCw=="
+      - --version
+      - "1"
+      - --max-clients-per-call
+      - "50"
+      - --cleanup-interval-ms
+      - "10000"
+      - --regional-url-template
+      - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.default.port }}"
+      - --calling-server-url
+      - "http://{{ include \"common.fullname\" . }}-calling-service-backend:{{ .Values.callingServiceBackend.service.ports.default.port }}"
+      - --storage-table
+      - "Rooms"
+      - --storage-endpoint
+      - "http://{{ include \"common.fullname\" . }}-localstack:{{ .Values.localstack.service.ports.default.port }}"
+      - --storage-region
+      - "us-east-1"
+      - --internal-api-port
+      - "8100"
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 8080
+        protocol: TCP
+      api:
+        port: 8100
+        protocol: TCP
+  # waitForCompoenents defines the a map of component services to wait for during pod initialization.
+  # Both the host and the port for each container are treated as Helm templates.
+  waitForComponents:
+    localstack:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-localstack"
+      port: "{{ .Values.localstack.service.ports.default.port }}"
+    callingServiceBackend:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-calling-service-backend"
+      port: "{{ .Values.callingServiceBackend.service.ports.default.port }}"
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.api.port }}"
+# callingServiceBackend defines the values for the Calling Service backend component.
+# This component is required for multimedia calls.
+callingServiceBackend:
+  enabled: true
+  image:
+    repository: ghcr.io/mollyim/flatline-calling-service-backend
+    tag: main
+    pullPolicy: Always
+  replicas: 1
+  hostNetwork: true
+  strategy: Recreate # Required due to host networking.
+  container:
+    command: calling_backend
+    args:
+      - --ice-candidate-ip
+      - "{{ .Values.global.advertisedAddress }}"
+      - --signaling-ip
+      - "{{ .Values.global.advertisedAddress }}"
+      - --ice-candidate-port
+      - "10000"
+      - --ice-candidate-port-tcp
+      - "10000"
+      - --inactivity-timeout-secs
+      - "60"
+      - --diagnostics-interval-secs
+      - "10"
+      - --approved-users-persistence-url
+      - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.api.port }}/v1/call-link-approvals"
+      - --remove-call-records-base-url
+      - "http://{{ include \"common.fullname\" . }}-calling-service-frontend:{{ .Values.callingServiceFrontend.service.ports.api.port }}/v2/conference"
+  service:
+    type: ClusterIP
+    ports:
+      # These ports are only for reference, as this component uses the host network.
+      default:
+        port: 8080
+        protocol: TCP
+      icetcp:
+        port: 10000
+        protocol: TCP
+      iceudp:
+        port: 10000
+        protocol: UDP
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 #
 #  Infrastructure Components
 #  These components provide functionality that Flatline requires.
@@ -340,9 +471,9 @@ localstack:
   # Example: helm install dev . --set-file localstack.configMap.data.whisper-service-dynamic-configuration=./custom.yaml
   configMap:
     data:
+      init-script: "{{ .Files.Get \"files/localstack/init.sh\" }}"
+      flatline-resources: "{{ .Files.Get \"files/localstack/flatline-resources.yaml\" }}"
       whisper-service-dynamic-configuration: "{{ .Files.Get \"files/localstack/whisper-service-dynamic-config-dev.yaml\" }}"
-      whisper-service-cloudformation: "{{ .Files.Get \"files/localstack/whisper-service-aws-cloudformation.yaml\" }}"
-      whisper-service-init-script: "{{ .Files.Get \"files/localstack/whisper-service-init.sh\" }}"
   volumeMounts:
     - name: config
       readOnly: false
@@ -350,17 +481,17 @@ localstack:
         name: "{{ include \"common.fullnameWithComponent\" . }}"
         defaultMode: "0755"
         items:
+          - key: init-script
+            path: init-script
+            mountPath: /etc/localstack/init/ready.d/init.sh
+            readOnly: true
+          - key: flatline-resources
+            path: flatline-resources
+            mountPath: /opt/flatline-resources.yaml
+            readOnly: true
           - key: whisper-service-dynamic-configuration
             path: whisper-service-dynamic-configuration
             mountPath: /opt/whisper-service-dynamic-config-dev.yaml
-            readOnly: true
-          - key: whisper-service-cloudformation
-            path: whisper-service-cloudformation
-            mountPath: /opt/whisper-service-aws-cloudformation.yaml
-            readOnly: true
-          - key: whisper-service-init-script
-            path: whisper-service-init-script
-            mountPath: /etc/localstack/init/ready.d/whisper-service-init.sh
             readOnly: true
     - name: data
       mountPath: /var/lib/localstack
@@ -569,6 +700,60 @@ redisCluster:
     failureThreshold: 60
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
+# coturn defines the values for a TURN server used for WebRTC calling.
+# This component is required for multimedia calls.
+coturn:
+  enabled: true
+  image:
+    repository: docker.io/coturn/coturn
+    tag: 4.7.0-alpine
+    pullPolicy: IfNotPresent
+  replicas: 1
+  hostNetwork: true
+  strategy: Recreate # Required due to host networking.
+  container:
+    command: docker-entrypoint.sh
+    args:
+      - --log-file=stdout
+  service:
+    type: ClusterIP
+    ports:
+      # These ports are only for reference, as this component uses the host network.
+      turntcp:
+        port: 3478
+        protocol: TCP
+      turnudp:
+        port: 3478
+        protocol: UDP
+      # Additional ports 49152 to 65535 UDP used as relay endpoints.
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file coturn.configMap.data.configuration=./custom.conf
+  configMap:
+    data:
+      configuration: "{{ tpl (.Files.Get \"files/coturn/turnserver.conf.tpl\") . }}"
+  volumeMounts:
+    - name: config
+      readOnly: true
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
+        items:
+          - key: configuration
+            path: configuration
+            mountPath: /etc/coturn/turnserver.conf
+            readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 5
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 60
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.turntcp.port }}"
 # otelCollector defines the values for an OpenTelemetry collector.
 # A collector compatible with StatsD is required by the Whisper Service component.
 # Disable this component to use an existing StatsD collector.
@@ -625,8 +810,6 @@ otelCollector:
 # Disable this component to use a different ingress gateway.
 traefikResources:
   enabled: true
-  # hostname configures the DNS name that will be used to access Flatline. Required.
-  hostname: flatline.localhost
   # chart references the existing Traefik chart. Optional.
   chart:
     # name references the name of the Traefik chart that is installed. Optional.
@@ -648,8 +831,8 @@ traefikResources:
   secret:
     type: kubernetes.io/tls
     stringData:
-      tls.crt: "{{ .Files.Get \"files/traefik/wildcard-localhost.pem\" }}"
-      tls.key: "{{ .Files.Get \"files/traefik/wildcard-localhost.key.pem\" }}"
+      tls.crt: "{{ .Files.Get \"files/traefik/wildcard-internal.pem\" }}"
+      tls.key: "{{ .Files.Get \"files/traefik/wildcard-internal.key.pem\" }}"
   # tls configures how Traefik will terminate TLS connections to Flatline. Required.
   tls:
     # secretName can be used to reference an existing Kubernetes TLS secret with "tls.crt" and "tls.key" items.

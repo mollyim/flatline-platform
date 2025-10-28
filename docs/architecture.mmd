@@ -6,43 +6,55 @@ config:
 ---
 
 flowchart TD
-    molly -->|Connects to| traefik
-    lib -->|Connects to| traefik
+    molly -->|HTTPS to| traefik
+    libsignal -->|Hardened HTTPS to| traefik
+    ringrtc -->|P2P WebRTC through| coturn
+    ringrtc -->|SFU WebRTC through| calling-backend
 
     traefik -->|Routes to| whisper
     traefik -->|Routes to| storage
     traefik -->|Routes to| cdn0
     traefik -->|Routes to| cdn3
+    traefik -->|Routes to| calling-frontend
 
     whisper -->|Reads/writes to| redis
     whisper -->|Interfaces with| registration
-    whisper -->|Reads/writes to| whisper-pre-key-store
-    whisper -->|Reads/writes to| whisper-database
-    whisper -->|Reads from| whisper-dynamic-config
-    whisper -->|Writes to| otel
     whisper -.->|Authorizes for| cdn0
     whisper -.->|Authorizes for| cdn3
+    whisper -.->|Authorizes for| coturn
+    whisper -->|Reads/writes to| whisper-pre-key-store
+    whisper -->|Reads/writes to| whisper-tables
+    whisper -->|Reads from| whisper-dynamic-config
+    whisper -->|Writes to| otel
 
     storage -->|Reads/writes to| cbtemulator
     storage -.->|Authorizes for| cdn0
 
+    calling-frontend -->|Interfaces with| calling-backend
+    calling-frontend -->|Reads/writes to| rooms-table
+
     subgraph molly["Molly (Flatline)"]
-        lib[libsignal]
+        libsignal[libsignal]
+        ringrtc[RingRTC]
     end
 
     subgraph localstack["LocalStack (AWS)"]
         cdn0@{ shape: cyl, label: "CDN0<br>(S3)" }
-        whisper-database@{ shape: cyl, label: "Whisper<br>Database<br>(DynamoDB)" }
+        whisper-tables@{ shape: cyl, label: "Whisper<br>Tables<br>(DynamoDB)" }
+        rooms-table@{ shape: cyl, label: "Rooms<br>Table<br>(DynamoDB)" }
         whisper-dynamic-config@{ shape: cyl, label: "Whisper<br>Dynamic Config<br>(S3)" }
         whisper-pre-key-store@{ shape: cyl, label: "Whisper<br>Pre-Key Store<br>(S3)" }
     end
 
-    subgraph "Flatline Prototype"
+    subgraph flatline["Flatline Prototype"]
         traefik[Traefik]
-        whisper[Whisper Service]
+        whisper[Whisper<br>Service]
         storage[Storage Service]
         localstack[LocalStack]
         registration[Registration<br>Service]
+        calling-frontend[Calling<br>Service<br>Frontend]
+        calling-backend[Calling<br>Service<br>Backend]
+        coturn["Coturn<br>(TURN)"]
         cdn3@{ shape: cyl, label: "CDN3<br>(tus)" }
         redis@{ shape: cyl, label: "Redis<br>Cluster"}
         cbtemulator@{ shape: cyl, label: "cbtemulator<br>(Bigtable)"}
