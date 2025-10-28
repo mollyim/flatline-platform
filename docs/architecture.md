@@ -15,10 +15,14 @@ Some design decisions for the prototype were influenced by the choice to primari
 - [Client](#client)
   - [Molly](#molly)
   - [libsignal](#libsignal)
+  - [ringrtc](#ringrtc)
 - [Core](#core)
   - [Whisper Service](#whisper-service)
   - [Storage Service](#storage-service)
   - [Registration Service](#registration-service)
+  - [Calling Service](#calling-service)
+    - [Frontend](#calling-service-frontend)
+    - [Backend](#calling-service-backend)
 - [Infrastructure](#infrastructure)
   - [Traefik](#traefik)
   - [LocalStack](#localstack)
@@ -39,7 +43,13 @@ The [Molly](https://molly.im/) client. The version of Molly used with Flatline h
 
 #### libsignal
 
-A [fork](https://github.com/mollyim/libsignal) of the original [libsignal](https://github.com/signalapp/libsignal/) library, built in Rust but with bindings for Java, Node and Swift. For the Flatline prototype, the development environment has been modified to pin the Flatline development certificate and loopback network address to communicate with the [Whisper service](#whisper-service). Communication with other components excluded from the Flatline prototype like [Secure Value Recovery](#secure-value-recovery), the [Contact Discovery Service](#contact-discovery-service) or the [Key Transparency Server](#key-transparency-server--auditor) has been disabled for the development environment.
+A [fork](https://github.com/mollyim/libsignal) of the original [libsignal](https://github.com/signalapp/libsignal) library, built in Rust with bindings for Java, Node and Swift. For the Flatline prototype, the development environment has been modified to pin the Flatline development certificate and loopback network address to communicate with the [Whisper service](#whisper-service). Communication with other components excluded from the Flatline prototype like [Secure Value Recovery](#secure-value-recovery), the [Contact Discovery Service](#contact-discovery-service) or the [Key Transparency Server](#key-transparency-server--auditor) has been disabled for the development environment.
+
+#### RingRTC
+
+A [fork](https://github.com/mollyim/ringrtc) of the original [RingRTC](https://github.com/signalapp/ringrtc) library, built in Rust with bindings for Java, Node and Swift. This library provides Molly with video and voice calling services built on top of WebRTC. No modifications have been made specifically for the Flatline prototype.
+
+RingRTC is the client component responsible for end-to-end multimedia encryption, [opaque to intermediate servers](https://signal.org/blog/how-to-build-encrypted-group-calls/#end-to-end-encryption). It is also responsible for managing P2P and SFU connections via WebRTC protocols (ICE, STUN, TURN); communicating directly with a TURN server (in the Flatline prototype, [Coturn](#coturn)) for one-to-one calls and with the [calling service](#calling-service) for group calls.
 
 ### Core
 
@@ -49,7 +59,7 @@ The main component of Flatline. Clients communicate with it directly over HTTPS 
 
 It expects to communicate with the propietary AWS DynamoDB and AWS S3 services, which in the Flatline prototype are emulated by [LocalStack](#localstack). Whisper relies on DynamoDB to host [several tables](#whisper-database) used to keep most of its persistent state. It also relies on S3 to manage [device pre-keys](#whisper-pre-key-store) and fetch [dynamic configuration](#whisper-dynamic-configuration) parameters.
 
-For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the client registration process, Whisper communicates with the [registration service](#registration-service). In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
+For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the client registration process, Whisper communicates with the [registration service](#registration-service). For one-to-one multimedia calls, Whisper provides clients with relay addresses and credentials for [Coturn](#coturn), which replaces the propietary Cloudflare Realtime service. In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
 
 #### Storage Service
 
@@ -60,6 +70,22 @@ The component that manages groups, including their membership and metadata. Clie
 The component that verifies phone numbers by sending a verification code via SMS or phone call. In the Flatline prototype, this component runs in development mode and does not actually send any codes. Its function in the prototype is mainly to act as a placeholder that [Whisper](#whisper-service) can interact with during registration and will accept any code that matches the last six digits of the registering phone number.
 
 In the future, it will be replaced by a service that registers users based on something other than a phone number.
+
+#### Calling Service
+
+The component that supports multimedia calls associated with a group. It is split into [frontend](#calling-service-frontend) and [backend](#calling-service-backend) sub-components. Although the backend sub-component implements most of this logic, the whole component is usually referred to as the SFU (Selective Forwarding Unit). Selective forwarding is used in order to [support end-to-end encrypted multimedia group calls at scale](https://signal.org/blog/how-to-build-encrypted-group-calls/).
+
+##### Calling Service (Frontend)
+
+The component that acts as a signaling server for group calls, directing client requests to the backend with the context necessary to establish the multimedia group call. This context is stored and retrieved from the [rooms table](#rooms-table). It shares an external service secret with the [storage service](#storage-service) as well as a dedicated zero knowledge secret with the [Whisper service](#whisper-service).
+
+Clients communicate with the calling service frontend HTTP REST API through [Traefik](#traefik). 
+
+##### Calling Service (Backend)
+
+The component that acts as the media forwarding server for group calls, directing media from one to many devices. It implements [most of the actual SFU logic](https://signal.org/blog/how-to-build-encrypted-group-calls/#the-hardest-part-of-an-sfu). This component also acts as an ICE-enabled STUN server for clients, which do not require TURN even when behind NAT due to the selective forwarding architecture.
+
+Clients communicate with the calling service backend directly using the [RingRTC](#ringrtc) library.
 
 ### Infrastructure
 
@@ -73,15 +99,19 @@ Traefik was used for this purpose due to the fact that it is bundled with [k3s](
 
 In the Flatline prototype, [LocalStack](https://github.com/localstack/localstack) is used to emulate various [AWS](https://docs.aws.amazon.com/) resources that components and clients originally depended on.
 
-The required AWS resources are created during the initialization of LocalStack [via CloudFormation](../charts/flatline/files/localstack/whisper-service-aws-cloudformation.yaml). After the creation of those resources, the necessary S3 objects will be [uploaded](../charts/flatline/files/localstack/whisper-service-init.sh) using the `awslocal` tool.
+The required AWS resources are created during the initialization of LocalStack [via CloudFormation](../charts/flatline/files/localstack/flatline-resources.yaml). After the creation of those resources, the necessary S3 objects will be [uploaded](../charts/flatline/files/localstack/init.sh) using the `awslocal` tool.
 
-##### Whisper Database
+##### Whisper Tables
 
-This element is a DynamoDB database which stores most information related to [Whisper](#whisper-service), including accounts, profiles, messages and various public keys. The key schema, attribute definitions and indexes from each table in this database are inferred from the relevant storage class in the Whisper source code and configured [via CloudFormation](../charts/flatline/files/localstack/whisper-service-aws-cloudformation.yaml).
+This element represents a collection of DynamoDB tables which store most information related to [Whisper](#whisper-service), including accounts, profiles, messages and various public keys. The key schema, attribute definitions and indexes necessary for each table were inferred from the relevant storage class in the Whisper source code and are configured [via CloudFormation](../charts/flatline/files/localstack/flatline-resources.yaml).
+
+##### Rooms Table
+
+This element is a DynamoDB table which stores the information necessary for the [calling service frontend](#calling-service-frontend) to manage group calls. This includes identifiers for both the room and the specific call in the room, information about the backend hosting the call and an encoded identifier for the creator of the call. The key schema, attribute definitions and indexes necessary for this table were obtained from the sample bootstrap script and are configured [via CloudFormation](../charts/flatline/files/localstack/flatline-resources.yaml).
 
 ##### Whisper Dynamic Configuration
 
-This element is an S3 bucket which stores a single YAML configuration file. This configuration file is periodically retrieved by [Whisper](#whisper-service) to update some configuration attributes in runtime. These attributes relate to captchas, limits, client deprecation and experiments, among others.
+This element is an S3 bucket which stores a [single YAML configuration file](../charts/flatline/files/localstack/whisper-service-dynamic-config-dev.yaml). This configuration file is periodically retrieved by [Whisper](#whisper-service) to update some configuration attributes in runtime. These attributes relate to captchas, limits, client deprecation and experiments, among others.
 
 ##### Whisper Pre-Key Store
 
@@ -108,6 +138,12 @@ The required tables and column families are created by an [initialization job](.
 The component that handles various caches and queues for the [Whisper service](#whisper-service). Due to the differences in communication between single Redis instances and Redis clusters, the Flatline prototype uses an actual Redis cluster in order to be compatible with the original implementation. However, this cluster is not designed to provide meaningful reliability benefits over a single Redis instance.
 
 In the Flatline prototype, this cluster is initialized using an [initialization job](../charts/flatline/files/redis-cluster/init.sh.tpl) that the [Whisper](#whisper-service) component waits for.
+
+#### Coturn
+
+The component that acts as the TURN server used for one-to-one multimedia calls in the Flatline prototype. This component enables peer-to-peer connections between devices that cannot connect directly due to being behind NAT or that enforce the use of relays in their client privacy settings. In the original implementation, this role is fulfilled by the commercial [Cloudflare Realtime](https://www.cloudflare.com/developer-platform/products/cloudflare-realtime/) service, which provides a managed TURN server.
+
+Due to the differences between Coturn and Cloudflare, the [Whisper](#whisper-service) component has been modified to decouple the relay server address configuration and authentication mechanisms from Cloudflare and implement equivalent logic for Coturn.
 
 #### OpenTelemetry Collector
 
