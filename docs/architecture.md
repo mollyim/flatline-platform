@@ -31,6 +31,7 @@ Some design decisions for the prototype were influenced by the choice to primari
     - [Whisper Pre-Key Store](#whisper-pre-key-store)
     - [CDN0](#cdn0)
   - [CDN3](#cdn3)
+  - [Coturn](#coturn)
   - [cbtemulator](#cbtemulator)
   - [Redis Cluster](#redis-cluster)
   - [OpenTelemetry Collector](#opentelemetry-collector)
@@ -127,6 +128,12 @@ The component that handles the upload of attachments and any other media (images
 
 In the Flatline prototype, the CDN3 component consists on a [tusd](https://github.com/tus/tusd) server with a [custom `pre-create` hook](../charts/flatline/files/tus/pre-create) that emulates the file naming behavior of the [original implementation](https://github.com/signalapp/tus-server) based on Cloudflare workers and R2. Unlike the original implementation where downloads are made directly from R2, the tus server used in Flatline acts both as the upload and download endpoint for clients.
 
+#### Coturn
+
+The component that acts as the TURN server used for one-to-one multimedia calls in the Flatline prototype. This component enables peer-to-peer connections between devices that cannot connect directly due to being behind NAT or that enforce the use of relays in their client privacy settings. In the original implementation, this role is fulfilled by the commercial [Cloudflare Realtime](https://www.cloudflare.com/developer-platform/products/cloudflare-realtime/) service, which provides a managed TURN server.
+
+Due to the differences between Coturn and Cloudflare, the [Whisper](#whisper-service) component has been modified to decouple the relay server address configuration and authentication mechanisms from Cloudflare and implement equivalent logic for Coturn.
+
 #### cbtemulator
 
 In the Flatline prototype, [cbtemulator](https://github.com/fullstorydev/emulators) is used to emulate Google's [Bigtable](https://cloud.google.com/bigtable/docs/overview) database, which the [storage service](#storage-service) relies on for all persistent data. It was chosen over [Google's own emulator](https://cloud.google.com/bigtable/docs/emulator) due to the fact that, unlike Google's in-memory implementation, it supports filesystem storage and allows the component to survive restarts without losing its state.
@@ -138,12 +145,6 @@ The required tables and column families are created by an [initialization job](.
 The component that handles various caches and queues for the [Whisper service](#whisper-service). Due to the differences in communication between single Redis instances and Redis clusters, the Flatline prototype uses an actual Redis cluster in order to be compatible with the original implementation. However, this cluster is not designed to provide meaningful reliability benefits over a single Redis instance.
 
 In the Flatline prototype, this cluster is initialized using an [initialization job](../charts/flatline/files/redis-cluster/init.sh.tpl) that the [Whisper](#whisper-service) component waits for.
-
-#### Coturn
-
-The component that acts as the TURN server used for one-to-one multimedia calls in the Flatline prototype. This component enables peer-to-peer connections between devices that cannot connect directly due to being behind NAT or that enforce the use of relays in their client privacy settings. In the original implementation, this role is fulfilled by the commercial [Cloudflare Realtime](https://www.cloudflare.com/developer-platform/products/cloudflare-realtime/) service, which provides a managed TURN server.
-
-Due to the differences between Coturn and Cloudflare, the [Whisper](#whisper-service) component has been modified to decouple the relay server address configuration and authentication mechanisms from Cloudflare and implement equivalent logic for Coturn.
 
 #### OpenTelemetry Collector
 
