@@ -35,20 +35,35 @@ Since you have chosen to use the development Traefik resources, you can find the
 - Contact Discovery Service: https://cds.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.callingServiceFrontend.enabled -}}
-- Calling Service: https://calling.{{ .Values.global.hostname }}
-{{ end -}}
-{{ if .Values.tus.enabled -}}
-- "CDN" based on tus: https://cdn-tus.{{ .Values.global.hostname }}
+- SFU: https://sfu.{{ .Values.global.hostname }}
 {{ end -}}
 {{ if .Values.localstack.enabled -}}
-- "CDN" based on S3: https://cdn-s3.{{ .Values.global.hostname }}
+- CDN0: https://cdn0.{{ .Values.global.hostname }}
+{{ end -}}
+{{ if .Values.tus.enabled -}}
+- CDN3: https://cdn3.{{ .Values.global.hostname }}
 {{ end -}}
 {{ else -}}
 Since you have chosen to use your own ingress gateway, ensure that the relevant Flatline endpoints are exposed:
 
-- Whisper Service on its default port.
-- Storage Service on its default port.
-- Contact Discovery Service on its default port.
+{{ if .Values.whisperService.enabled -}}
+- Whisper Service on port {{ .Values.whisperService.service.ports.default.port }}.
+{{ end -}}
+{{ if .Values.storageService.enabled -}}
+- Storage Service on port {{ .Values.storageService.service.ports.default.port }}.
+{{ end -}}
+{{ if .Values.contactDiscoveryService.enabled -}}
+- Contact Discovery Service on port {{ .Values.contactDiscoveryService.service.ports.default.port }}.
+{{ end -}}
+{{ if .Values.callingServiceFrontend.enabled -}}
+- Calling Service Frontend (SFU) on port {{ .Values.callingServiceFrontend.service.ports.default.port }}.
+{{ end -}}
+{{ if .Values.localstack.enabled -}}
+- Localstack (CDN0) on port {{ .Values.localstack.service.ports.default.port }}.
+{{ end -}}
+{{ if .Values.tus.enabled -}}
+- Tus (CDN3) on port {{ .Values.tus.service.ports.default.port }}.
+{{ end -}}
 
-These endpoints need to be reachable through TLS by the client applications.
+These endpoints need to be reachable by clients through TLS.
 {{ end -}}
