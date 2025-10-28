@@ -284,4 +284,5 @@ jobs:
             --set=storageService.image.tag=$tag \
             --set=registrationService.image.tag=$tag \
             --set=contactDiscoveryService.image.tag=$tag \
-            --set=callingService.image.tag=$tag"
+            --set=callingServiceFrontend.image.tag=$tag \
+            --set=callingServiceBackend.image.tag=$tag"
