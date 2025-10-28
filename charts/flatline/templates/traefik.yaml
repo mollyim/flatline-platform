@@ -61,27 +61,27 @@ spec:
           port: {{ .Values.contactDiscoveryService.service.ports.default.port }}
     {{- end }}
     {{- if .Values.callingServiceFrontend.enabled }}
-    - match: Host(`calling.{{ $hostname }}`)
+    - match: Host(`sfu.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-calling-service-frontend
           port: {{ .Values.callingServiceFrontend.service.ports.default.port }}
     {{- end }}
-    {{- if .Values.tus.enabled }}
-    - match: Host(`cdn-tus.{{ $hostname }}`)
-      kind: Rule
-      services:
-        - name: {{ include "common.fullname" . }}-tus
-          port: {{ .Values.tus.service.ports.default.port }}
-    {{- end }}
     {{- if .Values.localstack.enabled }}
-    - match: Host(`cdn-s3.{{ $hostname }}`)
+    - match: Host(`cdn0.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-localstack
           port: {{ .Values.localstack.service.ports.default.port }}
       middlewares:
         - name: {{ include "common.fullnameWithComponent" $ctx }}-add-prefix-cdn-s3
+    {{- end }}
+    {{- if .Values.tus.enabled }}
+    - match: Host(`cdn3.{{ $hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-tus
+          port: {{ .Values.tus.service.ports.default.port }}
     {{- end }}
   tls:
     secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
