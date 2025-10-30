@@ -129,7 +129,7 @@ The default hostname defined for Flatline in the Helm chart is "flatline.interna
 
 To host Flatline on a different hostname, [change](installation.md#customizing-the-installation) the `global.hostname` value in the Helm chart. You will need to update the certificate used in Traefik, which is also pinned by the Molly application and its CA is pinned by `libsignal`.
 
-The following are steps to re-generate and re-distribute all the necessary cryptographic material when changing the hostname used by Flatline. These steps rely on the [certificate utility script](../charts/flatline/files/traefik/gen-certs.sh) under .
+The following are steps to re-generate and re-distribute all the necessary cryptographic material when changing the hostname used by Flatline. These steps rely on the [certificate generation script](../charts/flatline/files/traefik/gen-certs.sh).
 
 1. Decide on the hostname to use for Flatline.
 
