@@ -58,4 +58,4 @@ Although many of the Flatline components provide means of reporting metrics and 
 
 ### Literal Duplication
 
-Some literals, [especially "secrets"](#secrets), that are shared between components are still duplicated in their respective configuration files. This means that changing such values will require searching for other instances where the value is used. Such values often have commends explaining this. In the future, these values should ideally be defined via the Helm chart values and injected in any components that require them.
+Some literals, [especially "secrets"](#secrets), that are shared between components are still duplicated in their respective configuration files. This means that changing such values will require searching for other instances where the value is used. These values are usually (but not always) found together with comments explaining this. In the future, shared values should be defined in the Helm chart and injected in any components that require them.
