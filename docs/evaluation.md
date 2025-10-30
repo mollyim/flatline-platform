@@ -83,7 +83,7 @@ The `10.0.2.2` address allows the emulated devices to [reach the host](https://d
 
 If Flatline is installed in a different host or physical devices are being used for this evaluation, ensure that client devices are able to resolve those hostnames to an IP address where they can reach Flatline. Ensure that the `global.advertisedAddress` Helm value is [changed](installation.md#customizing-the-installation) to that same IP address so that multimedia calls can work.
 
-If the hostname used for Flatline has been [changed](#changing-hostname) to a publicly registered domain, this step should not be necessary, as long as the DNS servers used by the Android Emulator host or client devices can resolve the name to an IP address that will be reachable by the clients.
+If the hostname used for Flatline has been [changed](#changing-hostname) to a publicly registered domain, this step should not be necessary, as long as the DNS servers used by the emulator host or client devices can resolve it to an IP address that clients can reach.
 
 ## Creating Accounts
 
@@ -121,7 +121,7 @@ The following steps should allow two devices to communicate with each other:
 
 Once both users are in contact, you will be able to test messaging, attachments, multimedia calls...
 
-If you find any unexpected errors or other issues, review the logs as described [above](#creating-accounts). If the logs seem correct but messages are not reaching some of the clients, re-install the Molly application in both devices through Android Studio (`Shift+F10`) to force reconnection to Whisper.
+If you find any unexpected errors or other issues, review the logs as described [above](#creating-accounts). If messages are still not reaching some of the clients, re-install the Molly application in both devices through Android Studio (`Shift+F10`) to force reconnection to Whisper.
 
 ## Extra Operations
 

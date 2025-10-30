@@ -48,7 +48,7 @@ Some common customization options are:
 
 - Overriding the bundled configuration files for the Flatline components.
 - Disabling bundled local cloud service emulators to rely on the actual cloud service providers instead.
-- Disabling bundled infrastructure components (e.g. Traefik-specific resources, Redis cluster, OpenTelemetry Collector...) to use existing ones.
+- Disabling bundled infrastructure components (e.g. Traefik, OpenTelemetry Collector...) to use existing ones.
 - Using an existing StorageClass instead of the default [`k3s` local path provisioner](https://docs.k3s.io/storage).
 
 These and other customizations are documented in the [`values.yaml`](charts/flatline/values.yaml) file.
