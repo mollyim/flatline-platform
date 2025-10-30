@@ -85,7 +85,7 @@ If Flatline is installed in a different host or physical devices are being used 
 
 If the hostname used for Flatline has been [changed](#changing-hostname) to a publicly registered domain, this step should not be necessary, as long as the DNS servers used by the Android Emulator host or client devices can resolve the name to an IP address that will be reachable by the clients.
 
-## Creating Account
+## Creating Accounts
 
 The previous steps should leave you with an emulated or physical device that has the Molly application installed and that is able to reach Flatline over the network. To test this, attempt to create an account:
 
@@ -101,11 +101,13 @@ The previous steps should leave you with an emulated or physical device that has
 
 6. Configure a username.
 
-This will allow this device to communicate with others that have followed the same procedure.
+To test any communication features, follow the above procedure with two or more devices.
 
-To test any messaging features, follow the procedure with two or more devices.
+If you find any unexpected errors or other issues, review the application logs using Logcat in Android Studio and the logs from the Whisper component using `kubectl` to ensure that requests are reaching Flatline and are being successfully handled.
 
-Afterwards, to allow two devices to communicate with each other, do the following on one device:
+## Testing Communication
+
+The following steps should allow two devices to communicate with each other:
 
 1. Tap on the bottom-right pencil icon.
 
@@ -117,13 +119,15 @@ Afterwards, to allow two devices to communicate with each other, do the followin
 
 5. The chat window will open, allowing you to message the other device.
 
-Once both users are in contact, you will be able to test messaging, attachments and multimedia calls.
+Once both users are in contact, you will be able to test messaging, attachments, multimedia calls...
+
+If you find any unexpected errors or other issues, review the logs as described [above](#creating-accounts). If the logs seem correct but messages are not reaching some of the clients, re-install the Molly application in both devices through Android Studio (`Shift+F10`) to force reconnection to Whisper.
 
 ## Extra Operations
 
 This section describes operations that may be useful during the evaluation of Flatline.
 
-### Changing the Hostname
+### Changing Hostname
 
 The default hostname defined for Flatline in the Helm chart is "flatline.internal". Defaulting to a hostname on a reserved TLD ensures that users can test Flatline without having to register a domain name or having to generate any certificates themselves.
 
@@ -146,9 +150,9 @@ The following are steps to re-generate and re-distribute all the necessary crypt
 
 5. Copy the newly generated `whisper.store` file to the Molly repository as `app/src/main/res/raw/whisper.store`.
 
-6. Copy the newly generated `ca.cer` file to the `libsignal` repository as `rust/net/res/internal.cer`.
+6. Optional. Copy the newly generated `ca.cer` file to the `libsignal` repository as `rust/net/res/internal.cer`.
 
-7. Upgrade the existing Helm chart installation with or install from scratch.
+7. Upgrade the existing Helm chart installation or install it from scratch.
 
 8. Update the URL references found under the `dev` environment in the `app/build.gradle.kts`.
 
