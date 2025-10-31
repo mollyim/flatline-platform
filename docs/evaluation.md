@@ -150,7 +150,7 @@ The following are steps to re-generate and re-distribute all the necessary crypt
 
 5. Copy the newly generated `whisper.store` file to the Molly repository as `app/src/main/res/raw/whisper.store`.
 
-6. Optional. Copy the newly generated `ca.cer` file to the `libsignal` repository as `rust/net/res/internal.cer`.
+6. If re-generated, copy the `ca.cer` file to the `libsignal` repository as `rust/net/res/internal.cer`.
 
 7. Upgrade the existing Helm chart installation or install it from scratch.
 

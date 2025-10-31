@@ -16,11 +16,11 @@ This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?r
 
 ## Documentation
 
-- [Architecture](docs/architecture.md)
-- [Compromises](docs/compromises.md)
-- [Installation](docs/installation.md)
-- [Evaluation](docs/evaluation.md)
-- [Development](docs/development.md)
+- [**Architecture**](docs/architecture.md): To learn about the components of the Flatline prototype.
+- [**Compromises**](docs/compromises.md): To learn about the compromises made for the Flatline prototype.
+- [**Installation**](docs/installation.md): To learn how to install the Flatline prototype in Kubernetes.
+- [**Evaluation**](docs/evaluation.md): To learn how to evaluate the Flatline prototype with Molly.
+- [**Development**](docs/development.md): To learn how to develop and customize the Flatline prototype.
 
 ## Features
 

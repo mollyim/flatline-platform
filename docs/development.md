@@ -1,5 +1,9 @@
 # Flatline Prototype Development
 
+This document provides instructions to locally test, build and deploy individual Flatline components.
+
+## Requirements
+
 To develop Flatline locally, ensure submodules are initialized and fetched:
 
 ```bash
@@ -149,7 +153,7 @@ docker build . -f backend/Dockerfile \
 
 The component should run on the target CPU family and others that support its features.
 
-## Installing on Kubernetes
+## Deploying to Kubernetes
 
 Kubernetes expects container images to be served from a container registry.
 

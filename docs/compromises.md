@@ -1,6 +1,6 @@
 # Flatline Prototype Compromises
 
-The following document lists a series of know compromises made for the Flatline prototype. These compromises were made for the sake of keeping the scope of the prototype contained and to reduce the complexity of working in the development and testing of the prototype. This list aims to identify them so that they can be addressed after the protoype stage is completed.
+This document lists a series of know compromises made for the Flatline prototype. These compromises were made for the sake of keeping the scope of the prototype contained and to reduce the complexity of working in the development and testing of the prototype. This list aims to identify them so that they can be addressed after the protoype stage is completed.
 
 This list is not exhaustive and compromises may be added or removed as development of the prototype evolves.
 
@@ -44,7 +44,7 @@ See the [Key Transparency Server & Auditor](architecture.md#key-transparency-ser
 
 ### Testing
 
-When some functionality has been disabled or changed, tests for that functionality have ocassionally been disabled, rather than updating to reflect the new expected behavior for Flatline. In the future, existing tests should be rewritten and new tests created for any changed or new functionality.
+When some functionality has been disabled or changed, tests for that functionality have ocassionally been disabled, rather than updated to reflect the new expected behavior for Flatline. In the future, existing tests should be rewritten and new tests created for any changed or new functionality.
 
 Additionally, Flatline does not yet implement end-to-end testing.
 
