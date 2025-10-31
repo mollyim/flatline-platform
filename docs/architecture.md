@@ -168,7 +168,7 @@ From the [original repository](https://github.com/signalapp/SecureValueRecovery2
 
 Flatline excludes this component because it relies on hardware features that are not commonly found in consumer hardware. Additionally, its purpose is to allow users to remember only a low-entropy secret (their PIN) in order to recover a higher-entropy secret stored server-side, while Flatline aims to replace the identity verification of phone number and PIN with a higher-entropy secret that users can remember or store, such as a mnemonic code.
 
-In the Flatline prototype, the Molly application will fail to connect to the SVR service and neither the PIN provided by the user nor the client-side secret will be stored server-side. This means that recovery will not be possible if the client-side secret is lost.
+In the Flatline prototype, the Molly application will fail to connect to the SVR service and neither the PIN provided by the user nor the client-side secret will be stored server-side. This means that recovery will not be possible if the client-side secret is lost. It also means that the backup feature is not available on Flatline. 
 
 ### Contact Discovery Service
 
