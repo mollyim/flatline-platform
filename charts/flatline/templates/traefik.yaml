@@ -83,6 +83,13 @@ spec:
         - name: {{ include "common.fullname" . }}-tus
           port: {{ .Values.tus.service.ports.default.port }}
     {{- end }}
+    {{- if .Values.authelia.enabled }}
+    - match: HostRegexp(`oidc.{{ $hostname }}`)
+      kind: Rule
+      services:
+        - name: {{ include "common.fullname" . }}-authelia
+          port: {{ .Values.authelia.service.ports.default.port }}
+    {{- end }}
   tls:
     secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
     options:

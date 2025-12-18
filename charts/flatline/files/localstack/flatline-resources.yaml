@@ -50,10 +50,10 @@ Resources:
           Projection:
             ProjectionType: ALL
 
-  AccountsPhoneNumbersTable:
+  AccountsPrincipalsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Accounts_PhoneNumbers
+      TableName: Accounts_Principals
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: P
@@ -62,10 +62,10 @@ Resources:
         - AttributeName: P
           KeyType: HASH
 
-  AccountsPhoneNumberIdentifiersTable:
+  AccountsPrincipalNameIdentifiersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Accounts_PhoneNumberIdentifiers
+      TableName: Accounts_PrincipalNameIdentifiers
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: PNI
@@ -73,6 +73,22 @@ Resources:
       KeySchema:
         - AttributeName: PNI
           KeyType: HASH
+
+  AccountsSubjectsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts_Subjects
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: VP
+          AttributeType: S
+        - AttributeName: VS
+          AttributeType: S
+      KeySchema:
+        - AttributeName: VP
+          KeyType: HASH
+        - AttributeName: VS
+          KeyType: RANGE
 
   AccountsUsedLinkDeviceTokensTable:
     Type: AWS::DynamoDB::Table
@@ -281,10 +297,10 @@ Resources:
           Projection:
             ProjectionType: KEYS_ONLY
 
-  PhoneNumberIdentifiersTable:
+  PrincipalNameIdentifiersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: PhoneNumberIdentifiers
+      TableName: PrincipalNameIdentifiers
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: P

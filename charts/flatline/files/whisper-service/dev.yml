@@ -111,9 +111,10 @@ dynamoDbClient:
 dynamoDbTables:
   accounts:
     tableName: Accounts
-    phoneNumberTableName: Accounts_PhoneNumbers
-    phoneNumberIdentifierTableName: Accounts_PhoneNumberIdentifiers
+    principalTableName: Accounts_Principals
+    principalNameIdentifierTableName: Accounts_PrincipalNameIdentifiers
     usernamesTableName: Accounts_Usernames
+    subjectsTableName: Accounts_Subjects
     usedLinkDeviceTokensTableName: Accounts_UsedLinkDeviceTokens
   appleDeviceChecks:
     tableName: AppleDeviceChecks
@@ -152,8 +153,8 @@ dynamoDbTables:
   onetimeDonations:
     tableName: OnetimeDonations
     expiration: P90D
-  phoneNumberIdentifiers:
-    tableName: PhoneNumberIdentifiers
+  principalNameIdentifiers:
+    tableName: PrincipalNameIdentifiers
   profiles:
     tableName: Profiles
   pushChallenge:

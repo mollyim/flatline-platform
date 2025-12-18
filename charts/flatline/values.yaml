@@ -758,6 +758,54 @@ coturn:
     failureThreshold: 60
     tcpSocket:
       port: "{{ .componentValues.service.ports.turntcp.port }}"
+# authelia defines the values for an Authelia authentication and authorization server.
+# An OpenID Connect identity provider is required for Whisper to register new accounts.
+# Disable this component to use an alternative OIDC identity provider.
+authelia:
+  enabled: true
+  image:
+    repository: ghcr.io/authelia/authelia
+    tag: 4.39.13
+  replicas: 1
+  service:
+    type: ClusterIP
+    ports:
+      default:
+        port: 9091
+        protocol: TCP
+  # configMap defines a ConfigMap associated with the component.
+  # The contents of all entries are treated as Helm templates.
+  # Some sample files are bundled with the chart. These files are intended for development use only.
+  # Use "values.yaml" or the "--set-file" argument to replace the bundled files with your own.
+  # Example: helm install dev . --set-file authelia.configMap.data.configuration=./custom.yaml
+  configMap:
+    data:
+      configuration: "{{ tpl (.Files.Get \"files/authelia/configuration.yml\") . }}"
+      users: "{{ .Files.Get \"files/authelia/users.yml\" }}"
+  volumeMounts:
+    - name: config
+      readOnly: true
+      configMap:
+        name: "{{ include \"common.fullnameWithComponent\" . }}"
+        items:
+          - key: configuration
+            path: configuration
+            mountPath: /config/configuration.yml
+            readOnly: true
+          - key: users
+            path: users
+            mountPath: /config/users.yml
+            readOnly: true
+  # startupProbe defines the criteria to mark the pod as running for the first time.
+  # The "waitForComponents" init container relies on this probe to consider the component ready.
+  # Ports and commands used in the probe are treated as Helm templates.
+  startupProbe:
+    initialDelaySeconds: 1
+    periodSeconds: 1
+    timeoutSeconds: 1
+    failureThreshold: 10
+    tcpSocket:
+      port: "{{ .componentValues.service.ports.default.port }}"
 # otelCollector defines the values for an OpenTelemetry collector.
 # A collector compatible with StatsD is required by the Whisper Service component.
 # Disable this component to use an existing StatsD collector.
