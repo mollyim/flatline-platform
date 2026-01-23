@@ -10,7 +10,6 @@ on:
     paths-ignore:
       - 'flatline-whisper-service'
       - 'flatline-storage-service'
-      - 'flatline-registration-service'
       - 'flatline-contact-discovery-service'
       - 'flatline-calling-service'
   workflow_dispatch:

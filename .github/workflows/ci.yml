@@ -5,7 +5,6 @@ on:
     paths:
       - 'flatline-whisper-service'
       - 'flatline-storage-service'
-      - 'flatline-registration-service'
       - 'flatline-contact-discovery-service'
       - 'flatline-calling-service'
       - '.github/workflows/ci.yml'
@@ -15,7 +14,6 @@ on:
     paths:
       - 'flatline-whisper-service'
       - 'flatline-storage-service'
-      - 'flatline-registration-service'
       - 'flatline-contact-discovery-service'
       - 'flatline-calling-service'
       - '.github/workflows/ci.yml'
@@ -154,30 +152,6 @@ jobs:
             -Djib.to.auth.username=${{ github.token }} \
             -Djib.to.auth.password=${{ github.token }}
 
-  registration-service:
-    name: Registration Service
-    runs-on: ubuntu-latest
-    container: ubuntu:22.04
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: flatline-registration-service
-    steps:
-      - *install-git
-      - *checkout-sources
-      - *set-up-jdk-24
-      - *determine-container-image-tag
-      - name: Test & Build Container Image
-        run: |
-          ./mvnw -e -B \
-            clean package \
-            -Denv=dev \
-            -Djib.goal=build \
-            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/flatline-registration-service:${{ steps.tag.outputs.tag }} \
-            -Djib.to.tags=${{ steps.tag.outputs.extra-tags }} \
-            -Djib.to.auth.username=${{ github.token }} \
-            -Djib.to.auth.password=${{ github.token }}
-
   contact-discovery-service:
     name: Contact Discovery Service
     runs-on: ubuntu-22.04
@@ -243,7 +217,6 @@ jobs:
     needs:
       - whisper-service
       - storage-service
-      - registration-service
       - contact-discovery-service
       - calling-service
     if: ${{ github.event_name == 'pull_request' }}
@@ -282,7 +255,6 @@ jobs:
             --set=traefikResources.enabled=false \
             --set=whisperService.image.tag=$tag \
             --set=storageService.image.tag=$tag \
-            --set=registrationService.image.tag=$tag \
             --set=contactDiscoveryService.image.tag=$tag \
             --set=callingServiceFrontend.image.tag=$tag \
             --set=callingServiceBackend.image.tag=$tag"
