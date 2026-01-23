@@ -80,15 +80,20 @@ Resources:
       TableName: Accounts_Subjects
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
-        - AttributeName: VP
+        - AttributeName: VPS
           AttributeType: S
-        - AttributeName: VS
-          AttributeType: S
+        - AttributeName: U
+          AttributeType: B
       KeySchema:
-        - AttributeName: VP
+        - AttributeName: VPS
           KeyType: HASH
-        - AttributeName: VS
-          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: u_to_vps
+          KeySchema:
+            - AttributeName: U
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   AccountsUsedLinkDeviceTokensTable:
     Type: AWS::DynamoDB::Table
@@ -411,6 +416,21 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: VerificationSessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: K
+          AttributeType: S
+      KeySchema:
+        - AttributeName: K
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  VerificationTokenKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VerificationTokenKeys
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: K
