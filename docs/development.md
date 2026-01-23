@@ -26,11 +26,7 @@ Requires a [FoundationDB client](https://apple.github.io/foundationdb/getting-st
 
 ```bash
 cd flatline-whisper-service
-./mvnw clean verify -e \
--pl '!integration-tests' -Dsurefire.failIfNoSpecifiedTests=false -Dtest=\
-\!org.whispersystems.textsecuregcm.controllers.VerificationControllerTest,\
-\!org.whispersystems.textsecuregcm.controllers.SubscriptionControllerTest,\
-\!org.whispersystems.textsecuregcm.registration.IdentityTokenCallCredentialsTest
+./mvnw clean verify -e
 ```
 
 Integration tests are excluded as they require an existing environment in which to run.
@@ -41,13 +37,6 @@ Tests for features that are disabled for the prototype are be excluded.
 
 ```bash
 cd flatline-storage-service
-./mvnw clean test
-```
-
-### Registration Service
-
-```bash
-cd flatline-registration-service
 ./mvnw clean test
 ```
 
@@ -117,17 +106,6 @@ cd flatline-storage-service
 ```
 
 The `env` property is used as a prefix to fetch the relevant configuration files from `storage-service/config`.
-
-### Registration Service
-
-```bash
-cd flatline-registration-service
-./mvnw clean package \
-  -Denv=dev -DskipTests \
-  -Djib.to.image="flatline-registration-service:dev"
-```
-
-As configured for this prototype, the verification code is always the last six digits of the phone number.
 
 ### Contact Discovery Service
 
@@ -199,18 +177,6 @@ When building with Maven, push the resulting container images to a registry. For
     -Djib.allowInsecureRegistries=true
 )
 
-# Registration Service
-(
-  cd flatline-registration-service && \
-  ./mvnw -e \
-    clean package \
-    -Denv=dev \
-    -DskipTests \
-    -Djib.goal=build \
-    -Djib.to.image=localhost:5000/flatline-registration-service:dev \
-    -Djib.allowInsecureRegistries=true
-)
-
 # Contact Discovery Service
 (
   cd flatline-contact-discovery-service && \
@@ -248,10 +214,6 @@ whisperService:
 storageService:
   image:
     repository: localhost:5000/flatline-storage-service
-    tag: dev
-registrationService:
-  image:
-    repository: localhost:5000/flatline-registration-service
     tag: dev
 contactDiscoveryService:
   image:

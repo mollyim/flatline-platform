@@ -19,7 +19,6 @@ Some design decisions for the prototype were influenced by the choice to primari
 - [Core](#core)
   - [Whisper Service](#whisper-service)
   - [Storage Service](#storage-service)
-  - [Registration Service](#registration-service)
   - [Calling Service](#calling-service)
     - [Frontend](#calling-service-frontend)
     - [Backend](#calling-service-backend)
@@ -60,17 +59,11 @@ The main component of Flatline. Clients communicate with it directly over HTTPS 
 
 It expects to communicate with the propietary AWS DynamoDB and AWS S3 services, which in the Flatline prototype are emulated by [LocalStack](#localstack). Whisper relies on DynamoDB to host [several tables](#whisper-database) used to keep most of its persistent state. It also relies on S3 to manage [device pre-keys](#whisper-pre-key-store) and fetch [dynamic configuration](#whisper-dynamic-configuration) parameters.
 
-For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the client registration process, Whisper communicates with the [registration service](#registration-service). For one-to-one multimedia calls, Whisper provides clients with relay addresses and credentials for [Coturn](#coturn), which replaces the propietary Cloudflare Realtime service. In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
+For various caches and queues, Whisper reslies on a [Redis cluster](#redis-cluster). During the account verification and registration process, Whisper communicates with [Authelia](#authelia) as the default verification provider. For one-to-one multimedia calls, Whisper provides clients with relay addresses and credentials for [Coturn](#coturn), which replaces the propietary Cloudflare Realtime service. In Flatline, Whisper is configured to send telemetry to the [OpenTelemetry Collector](#opentelemetry-collector) component, which replaces the propietary Datadog Agent.
 
 #### Storage Service
 
 The component that manages groups, including their membership and metadata. Clients communicate with it directly. It stores and retrieves its data from a Bigtable database, which in the Flatline prototype is emulated by the [cbtemulator](#cbtemulator) component. It also provides clients with the necessary credentials to upload group avatars to the S3-based [CDN0](#cdn0) component.
-
-#### Registration Service
-
-The component that verifies phone numbers by sending a verification code via SMS or phone call. In the Flatline prototype, this component runs in development mode and does not actually send any codes. Its function in the prototype is mainly to act as a placeholder that [Whisper](#whisper-service) can interact with during registration and will accept any code that matches the last six digits of the registering phone number.
-
-In the future, it will be replaced by a service that registers users based on something other than a phone number.
 
 #### Calling Service
 
@@ -127,6 +120,12 @@ This element is an S3 bucket where clients upload avatar images to and download 
 The component that handles the upload of attachments and any other media (images, video, audio, documents, stories...) other than avatar images. In the Flatline prototype, the experimental CDN3 feature has been made the default CDN for attachments over the previous CDN2, which relies on the GCS (Google Cloud Storage) service.
 
 In the Flatline prototype, the CDN3 component consists on a [tusd](https://github.com/tus/tusd) server with a [custom `pre-create` hook](../charts/flatline/files/tus/pre-create) that emulates the file naming behavior of the [original implementation](https://github.com/signalapp/tus-server) based on Cloudflare workers and R2. Unlike the original implementation where downloads are made directly from R2, the tus server used in Flatline acts both as the upload and download endpoint for clients.
+
+#### Authelia
+
+The component that acts as a verification provider by implementing the [OpenID Connect specification](https://openid.net/specs/openid-connect-core-1_0.html). Any verification provider configured in Flatline can be used by clients to demonstrate ownership over a certain principal. Both the [Whisper](#whisper-service) component and clients will communicate with the verification provider it in order to complete the [OAuth 2.0](https://www.rfc-editor.org/rfc/rfc6749) [PKCE](https://datatracker.ietf.org/doc/html/rfc7636) flow with [PAR](https://datatracker.ietf.org/doc/html/rfc9126), which will result in [Whisper](#whisper-service) obtaining an identity token that it can use to verify ownership of the principal associated with the account.
+
+Authelia has been chosen as the default for the Flatline prototype due to its support for configuration completely through YAML files, which allows understanding the integration with [Whisper](#whisper-service) at a glance. This understanding can be used to integrate other verification providers what are also compatible with OIDC.
 
 #### Coturn
 
