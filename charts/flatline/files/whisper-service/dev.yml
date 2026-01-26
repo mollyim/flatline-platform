@@ -180,6 +180,8 @@ dynamoDbTables:
     tableName: ClientPublicKeys
   verificationSessions:
     tableName: VerificationSessions
+  verificationTokenKeys:
+    tableName: VerificationTokenKeys
 
 pagedSingleUseKEMPreKeyStore:
   endpointOverride: http://{{ include "common.fullname" . }}-localstack:4566 # AWS endpoint
