@@ -21,7 +21,7 @@ To register an account with a specific principal, clients can use any of the tru
 
 The client will need to authenticate with an identity in one of the providers offered by the Flatline instance in order to prove ownership over a principal. When setting up Flatline, the operator will decide which claim from the identity token returned by the verification provider should be used as the principal. By default, the subject claim (i.e. "sub") is used as the principal.
 
-For any given Flatline instance, there can only be one account with the same principal. This means that even if multiple verification providers are offered to clients, only one can be used to register the same identity. Likewise, even if the resulting principal would be different, the same verification provider and subject (the "sub" claim from the identity token) can only be used to register a single account.
+For any given Flatline instance, there can only be one account with the same principal. Even if multiple verification providers are offered to clients, only one can be used to register the same identity. Likewise, even if the resulting principal would be different, the same verification provider and subject (the "sub" claim from the identity token) can only be used to register a single account.
 
 This new process has the following benefits:
 
@@ -63,8 +63,8 @@ This workflow is built on top of the following specifications:
 
 ## Relevant Implementation Details
 
-- The [Nimbus](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk) library is used for working with OIDC, PAR, JWT, JWK, JWKS...
+- The [Nimbus](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk) library is used for working with OAuth 2.0, PAR, JWT, JWK, JWKS...
 - The identity token that is used for verification is obtained from the verification provider through a [PKCE](https://datatracker.ietf.org/doc/html/rfc7636) flow with [PAR](https://datatracker.ietf.org/doc/html/rfc9126).
 - Public keys (i.e. the response from the JWKS URI) for each verification provider are trusted on first use and stored.
 - The verification (`/v1/verification`) and registration (`/v1/registration`) controller APIs have experienced breaking changes.
-- Rate limiting based on the source IP address is implemented when starting a verification session to prevent DoS to the verification provider.
+- Rate limiting is implemented when starting a verification session to prevent DoS to the verification provider.
