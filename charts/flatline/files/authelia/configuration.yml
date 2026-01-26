@@ -93,7 +93,7 @@ identity_providers:
           b6FEnEEK6U2B4iyu7ZMoYvQ9uC64704BSUFh3wmmbXyxvkAbzA==
           -----END RSA PRIVATE KEY-----
     clients:
-      - client_id: 'flatline'
+      - client_id: 'df5a4af6-56da-4b54-bea6-5c9473d42cdb'
         client_name: 'Flatline'
         # Digest of "1c61c5ca70da310332916778e95622dd".
         client_secret: '$pbkdf2-sha512$310000$YzhwNzhuN3BVTWxuMGp6dmQ0YUs0UQ$c0orVYk50ljSw9U5oE6q.fkNuFe0EEzjRErmwRV3kazGffGKlRZXE0pIT42LbgiNDPRIFQEgSiUeJYQ.jwrGdQ'
