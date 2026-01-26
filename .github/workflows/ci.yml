@@ -94,10 +94,7 @@ jobs:
         run: |
           ./mvnw -e -B \
             clean verify \
-            -DfoundationDb.serviceContainerNamePrefix=foundationdb \
-            -pl '!integration-tests' \
-            -Dsurefire.failIfNoSpecifiedTests=false \
-            -Dtest=\!org.whispersystems.textsecuregcm.controllers.VerificationControllerTest,\!org.whispersystems.textsecuregcm.controllers.SubscriptionControllerTest,\!org.whispersystems.textsecuregcm.registration.IdentityTokenCallCredentialsTest
+            -DfoundationDb.serviceContainerNamePrefix=foundationdb
       - &determine-container-image-tag
         name: Determine Container Image Tag
         id: tag
