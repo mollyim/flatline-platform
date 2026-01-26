@@ -241,31 +241,6 @@ storageService:
     failureThreshold: 20
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
-# contactDiscoveryService defines the values for the Contact Discovery Service component.
-contactDiscoveryService:
-  # This component is disabled by default. It requires running on Intel SGX hardware.
-  enabled: false
-  image:
-    repository: ghcr.io/mollyim/flatline-contact-discovery-service
-    tag: main
-    pullPolicy: Always
-  replicas: 1
-  service:
-    type: ClusterIP
-    ports:
-      default:
-        port: 8080
-        protocol: TCP
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
 # callingServiceFrontend defines the values for the Calling Service frontend component.
 # This component is required for multimedia calls.
 callingServiceFrontend:

@@ -40,37 +40,6 @@ cd flatline-storage-service
 ./mvnw clean test
 ```
 
-### Contact Discovery Service
-
-To test C dependencies:
-
-```bash
-cd flatline-contact-discovery-service
-make -C c docker_tests
-make -C c docker_valgrinds
-```
-
-To run minimal tests without Intel SGX:
-
-```bash
-cd flatline-contact-discovery-service
-./mvnw verify -Dtest=\
-\!org.signal.cdsi.enclave.**,\
-\!org.signal.cdsi.IntegrationTest,\
-\!org.signal.cdsi.JsonMapperInjectionIntegrationTest,\
-\!org.signal.cdsi.limits.redis.RedisLeakyBucketRateLimiterIntegrationTest,\
-\!org.signal.cdsi.util.ByteSizeValidatorTest
-```
-
-To run all tests with Intel SGX:
-
-```bash
-cd flatline-contact-discovery-service
-# Set up Intel SGX on Ubuntu 22.04.
-sudo ./c/docker/sgx_runtime_libraries.sh
-./mvnw verify
-```
-
 ### Calling Service
 
 This component is built in Rust and requires its toolchain.
@@ -106,15 +75,6 @@ cd flatline-storage-service
 ```
 
 The `env` property is used as a prefix to fetch the relevant configuration files from `storage-service/config`.
-
-### Contact Discovery Service
-
-```bash
-cd flatline-contact-discovery-service
-./mvnw package \
-  -Dpackaging=docker -DskipTests \
-  -Djib.to.image="flatline-contact-discovery-service:dev"
-```
 
 ### Calling Service
 
@@ -177,17 +137,6 @@ When building with Maven, push the resulting container images to a registry. For
     -Djib.allowInsecureRegistries=true
 )
 
-# Contact Discovery Service
-(
-  cd flatline-contact-discovery-service && \
-  ./mvnw -e \
-  deploy \
-  -Dpackaging=docker \
-  -DskipTests \
-  -Djib.to.image=localhost:5000/flatline-contact-discovery-service:dev \
-  -Djib.allowInsecureRegistries=true
-)
-
 # Calling Service
 (
   cd flatline-calling-service
@@ -214,10 +163,6 @@ whisperService:
 storageService:
   image:
     repository: localhost:5000/flatline-storage-service
-    tag: dev
-contactDiscoveryService:
-  image:
-    repository: localhost:5000/flatline-contact-discovery-service
     tag: dev
 callingServiceFrontend:
   image:

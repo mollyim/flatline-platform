@@ -31,9 +31,6 @@ Since you have chosen to use the development Traefik resources, you can find the
 - Storage Service: https://storage.{{ .Values.global.hostname }}
 - Storage Service Admin: https://storage-admin.{{ .Values.global.hostname }}
 {{ end -}}
-{{ if .Values.contactDiscoveryService.enabled -}}
-- Contact Discovery Service: https://cds.{{ .Values.global.hostname }}
-{{ end -}}
 {{ if .Values.callingServiceFrontend.enabled -}}
 - SFU: https://sfu.{{ .Values.global.hostname }}
 {{ end -}}
@@ -54,9 +51,6 @@ Since you have chosen to use your own ingress gateway, ensure that the relevant 
 {{ end -}}
 {{ if .Values.storageService.enabled -}}
 - Storage Service on port {{ .Values.storageService.service.ports.default.port }}.
-{{ end -}}
-{{ if .Values.contactDiscoveryService.enabled -}}
-- Contact Discovery Service on port {{ .Values.contactDiscoveryService.service.ports.default.port }}.
 {{ end -}}
 {{ if .Values.callingServiceFrontend.enabled -}}
 - Calling Service Frontend (SFU) on port {{ .Values.callingServiceFrontend.service.ports.default.port }}.

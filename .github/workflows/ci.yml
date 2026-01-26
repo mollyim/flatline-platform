@@ -5,7 +5,6 @@ on:
     paths:
       - 'flatline-whisper-service'
       - 'flatline-storage-service'
-      - 'flatline-contact-discovery-service'
       - 'flatline-calling-service'
       - '.github/workflows/ci.yml'
   push:
@@ -14,7 +13,6 @@ on:
     paths:
       - 'flatline-whisper-service'
       - 'flatline-storage-service'
-      - 'flatline-contact-discovery-service'
       - 'flatline-calling-service'
       - '.github/workflows/ci.yml'
 
@@ -149,39 +147,6 @@ jobs:
             -Djib.to.auth.username=${{ github.token }} \
             -Djib.to.auth.password=${{ github.token }}
 
-  contact-discovery-service:
-    name: Contact Discovery Service
-    runs-on: ubuntu-22.04
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: flatline-contact-discovery-service
-    steps:
-      - *checkout-sources
-      - name: Set up JDK 24
-        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
-        with:
-          distribution: 'temurin'
-          java-version: 24
-          cache: 'maven'
-      - *determine-container-image-tag
-      - name: Test
-        # Tests for features disabled in the Flatline prototype are excluded.
-        run: |
-          ./mvnw -e -B \
-            verify \
-            -Dtest=\!org.signal.cdsi.enclave.**,\!org.signal.cdsi.IntegrationTest,\!org.signal.cdsi.JsonMapperInjectionIntegrationTest,\!org.signal.cdsi.limits.redis.RedisLeakyBucketRateLimiterIntegrationTest,\!org.signal.cdsi.util.ByteSizeValidatorTest
-      - name: Build Container Image
-        run: |
-          ./mvnw -e -B \
-            deploy \
-            -Dpackaging=docker \
-            -DskipTests \
-            -Djib.to.image=ghcr.io/${{ github.repository_owner }}/flatline-contact-discovery-service:${{ steps.tag.outputs.tag }} \
-            -Djib.to.tags=${{ steps.tag.outputs.extra-tags }} \
-            -Djib.to.auth.username=${{ github.token }} \
-            -Djib.to.auth.password=${{ github.token }}
-
   calling-service:
     name: Calling Service
     runs-on: ubuntu-22.04
@@ -214,7 +179,6 @@ jobs:
     needs:
       - whisper-service
       - storage-service
-      - contact-discovery-service
       - calling-service
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
@@ -252,6 +216,5 @@ jobs:
             --set=traefikResources.enabled=false \
             --set=whisperService.image.tag=$tag \
             --set=storageService.image.tag=$tag \
-            --set=contactDiscoveryService.image.tag=$tag \
             --set=callingServiceFrontend.image.tag=$tag \
             --set=callingServiceBackend.image.tag=$tag"

@@ -109,7 +109,7 @@ This element is an S3 bucket which stores a [single YAML configuration file](../
 
 ##### Whisper Pre-Key Store
 
-This element is an S3 bucket where [Whisper](#whisper-service) stores device pre-keys that are referenced in DynamoDB. These keys are uploaded by [Whisper](#whisper-service) on behalf of clients and requested by other clients who wish to initiate communication with a given account or phone number identity.
+This element is an S3 bucket where [Whisper](#whisper-service) stores device pre-keys that are referenced in DynamoDB. These keys are uploaded by [Whisper](#whisper-service) on behalf of clients and requested by other clients who wish to initiate communication with a given account or principal name identity.
 
 ##### CDN0
 
@@ -165,20 +165,20 @@ From the [original repository](https://github.com/signalapp/SecureValueRecovery2
 >
 > The SVR3 project expands on this approach by implementing secret-sharing across multiple hardware-protected backends (SGX, Nitro, SEV-SNP), requiring breaking of all underlying hardware security models to extract the necessary secrets.
 
-Flatline excludes this component because it relies on hardware features that are not commonly found in consumer hardware. Additionally, its purpose is to allow users to remember only a low-entropy secret (their PIN) in order to recover a higher-entropy secret stored server-side, while Flatline aims to replace the identity verification of phone number and PIN with a higher-entropy secret that users can remember or store, such as a mnemonic code.
+Flatline excludes this component because it relies on hardware features that are not commonly found in consumer hardware.
 
-In the Flatline prototype, the Molly application will fail to connect to the SVR service and neither the PIN provided by the user nor the client-side secret will be stored server-side. This means that recovery will not be possible if the client-side secret is lost. It also means that the backup feature is not available on Flatline. 
+In the Flatline prototype, the Molly application will fail to connect to the SVR service and neither the PIN provided by the user nor the client-side secret will be stored server-side. This means that recovery will not be possible if the client-side secret is lost. It also means that the backup feature is not available in Flatline.
 
 ### Contact Discovery Service
 
 The Contact Discovery Service component "allows clients to discover which of their contacts are registered users, but does not reveal their contacts to the service operator or any party that may have compromised the service". Although this definition is from the [legacy repository](https://github.com/signalapp/ContactDiscoveryService), the [current version](https://github.com/signalapp/ContactDiscoveryService-Icelake) of the CDS shares the same goal. The security of this process [hinges on the Intel SGX enclave](https://signal.org/blog/private-contact-discovery/). 
 
-Flatline excludes this component because it relies on hardware features that are not commonly found in consumer hardware. Additionally, its purpose is to allow users to find other registered users based on their phone number, while Flatline aims to replace phone numbers with an alternative method to identify users and, consequently, to discover other registered users.
+Flatline excludes this component because it relies on hardware features that are not commonly found in consumer hardware. Additionally, its purpose is to allow users to find other registered users based on their phone number, while Flatline replaces phone numbers with the more generic concept of principals.
 
-In the Flatline prototype, the Molly application will fail to connect to the CDS and phone contacts will not be used to find other registered users. To communicate with other registered users, the user will have to provide their username. In the future, a Flatline directory service based on an alternative to phone numbers should replace the CDS.
+In the Flatline prototype, the Molly application will fail to connect to the CDS and phone contacts will not be used to find other registered users. To communicate with other registered users, the user will have to provide their username. In the future, a Flatline directory service based on principals should replace the CDS.
 
 ### Key Transparency Server & Auditor
 
-The [Key Transparency Server](https://github.com/signalapp/key-transparency-server) component allows clients to verify that the public keys that they obtain from Flatline are in fact associated to the identity (e.g. the phone number) that they are attempting to communicate with. This is achieved by appending every public key update and its associated identity to a "globally consistent, cryptographically-protected, append-only log". The integrity of this log is verified and signed by the [Key Transparency Auditor](https://github.com/signalapp/key-transparency-auditor) component, which acts as a third-party auditor for the key transparency log. This feature has still not been officially announced and its sources were published after the development of Flatline began.
+The [Key Transparency Server](https://github.com/signalapp/key-transparency-server) component allows clients to verify that the public keys that they obtain from Flatline are in fact associated to the identity that they are attempting to communicate with. This is achieved by appending every public key update and its associated identity to a "globally consistent, cryptographically-protected, append-only log". The integrity of this log is verified and signed by the [Key Transparency Auditor](https://github.com/signalapp/key-transparency-auditor) component, which acts as a third-party auditor for the key transparency log. This feature has still not been officially announced and its sources were published after the development of Flatline began.
 
 In the Flatline prototype, this components are excluded in order to contain the scope of the prototype. At the time of writing, key transparency checks seem to be implemented in the clients but not yet enforced. As a result, Flatline is able to function without it. In the future, these components should be included in order to support clients eventually enforcing their usage.

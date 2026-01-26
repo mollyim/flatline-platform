@@ -19,9 +19,6 @@ jobs:
           - name: Storage Service
             repo: mollyim/flatline-storage-service
             upstream: https://github.com/signalapp/storage-service
-          - name: Contact Discovery Service
-            repo: mollyim/flatline-contact-discovery-service
-            upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
           - name: Calling Service
             repo: mollyim/flatline-calling-service
             upstream: https://github.com/signalapp/Signal-Calling-Service
