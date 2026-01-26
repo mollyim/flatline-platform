@@ -164,10 +164,6 @@ whisperService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-otel-collector"
       port: "{{ .Values.otelCollector.service.ports.http.port }}"
-    registrationService:
-      type: tcp
-      host: "{{ include \"common.fullname\" . }}-registration-service"
-      port: "{{ .Values.registrationService.service.ports.default.port }}"
   # startupProbe defines the criteria to mark the pod as running for the first time.
   # The "waitForComponents" init container relies on this probe to consider the component ready.
   # Ports and commands used in the probe are treated as Helm templates.
@@ -243,30 +239,6 @@ storageService:
     periodSeconds: 1
     timeoutSeconds: 1
     failureThreshold: 20
-    tcpSocket:
-      port: "{{ .componentValues.service.ports.default.port }}"
-# registrationService defines the values for the Registration Service component.
-registrationService:
-  enabled: true
-  image:
-    repository: ghcr.io/mollyim/flatline-registration-service
-    tag: main
-    pullPolicy: Always
-  replicas: 1
-  service:
-    type: ClusterIP
-    ports:
-      default:
-        port: 50051
-        protocol: TCP
-  # startupProbe defines the criteria to mark the pod as running for the first time.
-  # The "waitForComponents" init container relies on this probe to consider the component ready.
-  # Ports and commands used in the probe are treated as Helm templates.
-  startupProbe:
-    initialDelaySeconds: 1
-    periodSeconds: 1
-    timeoutSeconds: 1
-    failureThreshold: 10
     tcpSocket:
       port: "{{ .componentValues.service.ports.default.port }}"
 # contactDiscoveryService defines the values for the Contact Discovery Service component.
