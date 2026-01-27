@@ -160,6 +160,10 @@ whisperService:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-redis-cluster"
       port: "{{ .Values.redisCluster.service.ports.default.port }}"
+    authelia:
+      type: tcp
+      host: "{{ include \"common.fullname\" . }}-authelia"
+      port: "{{ .Values.authelia.service.ports.default.port }}"
     otelCollector:
       type: tcp
       host: "{{ include \"common.fullname\" . }}-otel-collector"
