@@ -16,9 +16,10 @@ flowchart TD
     traefik -->|Routes to| cdn0
     traefik -->|Routes to| cdn3
     traefik -->|Routes to| calling-frontend
+    traefik -->|Routes to| authelia
 
     whisper -->|Reads/writes to| redis
-    whisper -->|Interfaces with| registration
+    whisper -->|Authenticates with| authelia
     whisper -.->|Authorizes for| cdn0
     whisper -.->|Authorizes for| cdn3
     whisper -.->|Authorizes for| coturn
@@ -51,10 +52,10 @@ flowchart TD
         whisper[Whisper<br>Service]
         storage[Storage Service]
         localstack[LocalStack]
-        registration[Registration<br>Service]
         calling-frontend[Calling<br>Service<br>Frontend]
         calling-backend[Calling<br>Service<br>Backend]
         coturn["Coturn<br>(TURN)"]
+        authelia["Authelia<br>(OIDC IdP)"]
         cdn3@{ shape: cyl, label: "CDN3<br>(tus)" }
         redis@{ shape: cyl, label: "Redis<br>Cluster"}
         cbtemulator@{ shape: cyl, label: "cbtemulator<br>(Bigtable)"}

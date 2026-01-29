@@ -50,10 +50,10 @@ Resources:
           Projection:
             ProjectionType: ALL
 
-  AccountsPhoneNumbersTable:
+  AccountsPrincipalsTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Accounts_PhoneNumbers
+      TableName: Accounts_Principals
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: P
@@ -62,10 +62,10 @@ Resources:
         - AttributeName: P
           KeyType: HASH
 
-  AccountsPhoneNumberIdentifiersTable:
+  AccountsPrincipalNameIdentifiersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Accounts_PhoneNumberIdentifiers
+      TableName: Accounts_PrincipalNameIdentifiers
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: PNI
@@ -73,6 +73,27 @@ Resources:
       KeySchema:
         - AttributeName: PNI
           KeyType: HASH
+
+  AccountsSubjectsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: Accounts_Subjects
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: VPS
+          AttributeType: S
+        - AttributeName: U
+          AttributeType: B
+      KeySchema:
+        - AttributeName: VPS
+          KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: u_to_vps
+          KeySchema:
+            - AttributeName: U
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   AccountsUsedLinkDeviceTokensTable:
     Type: AWS::DynamoDB::Table
@@ -281,10 +302,10 @@ Resources:
           Projection:
             ProjectionType: KEYS_ONLY
 
-  PhoneNumberIdentifiersTable:
+  PrincipalNameIdentifiersTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: PhoneNumberIdentifiers
+      TableName: PrincipalNameIdentifiers
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: P
@@ -395,6 +416,21 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       TableName: VerificationSessions
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: K
+          AttributeType: S
+      KeySchema:
+        - AttributeName: K
+          KeyType: HASH
+      TimeToLiveSpecification:
+        AttributeName: E
+        Enabled: true
+
+  VerificationTokenKeysTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: VerificationTokenKeys
       BillingMode: PAY_PER_REQUEST
       AttributeDefinitions:
         - AttributeName: K

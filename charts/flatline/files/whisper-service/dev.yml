@@ -111,9 +111,10 @@ dynamoDbClient:
 dynamoDbTables:
   accounts:
     tableName: Accounts
-    phoneNumberTableName: Accounts_PhoneNumbers
-    phoneNumberIdentifierTableName: Accounts_PhoneNumberIdentifiers
+    principalTableName: Accounts_Principals
+    principalNameIdentifierTableName: Accounts_PrincipalNameIdentifiers
     usernamesTableName: Accounts_Usernames
+    subjectsTableName: Accounts_Subjects
     usedLinkDeviceTokensTableName: Accounts_UsedLinkDeviceTokens
   appleDeviceChecks:
     tableName: AppleDeviceChecks
@@ -152,8 +153,8 @@ dynamoDbTables:
   onetimeDonations:
     tableName: OnetimeDonations
     expiration: P90D
-  phoneNumberIdentifiers:
-    tableName: PhoneNumberIdentifiers
+  principalNameIdentifiers:
+    tableName: PrincipalNameIdentifiers
   profiles:
     tableName: Profiles
   pushChallenge:
@@ -179,6 +180,8 @@ dynamoDbTables:
     tableName: ClientPublicKeys
   verificationSessions:
     tableName: VerificationSessions
+  verificationTokenKeys:
+    tableName: VerificationTokenKeys
 
 pagedSingleUseKEMPreKeyStore:
   endpointOverride: http://{{ include "common.fullname" . }}-localstack:4566 # AWS endpoint
@@ -545,3 +548,16 @@ externalRequestFilter:
 
 idlePrimaryDeviceReminder:
   minIdleDuration: P30D
+
+verification:
+  providers:
+      - id: 266d1e66-8740-48a2-b8a8-736eaaf97419
+        name: Authelia
+        issuer: https://oidc.{{ .Values.global.hostname }}
+        authorizationEndpoint: https://oidc.{{ .Values.global.hostname }}/api/oidc/authorization
+        tokenEndpoint: https://oidc.{{ .Values.global.hostname }}/api/oidc/token
+        parEndpoint: https://oidc.{{ .Values.global.hostname }}/api/oidc/pushed-authorization-request
+        jwksUri: https://oidc.{{ .Values.global.hostname }}/.well-known/jwks.json
+        clientId: df5a4af6-56da-4b54-bea6-5c9473d42cdb
+        scopes: "openid email profile"
+        principalClaim: email
