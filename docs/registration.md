@@ -66,5 +66,6 @@ This workflow is built on top of the following specifications:
 - The [Nimbus](https://connect2id.com/products/nimbus-oauth-openid-connect-sdk) library is used for working with OAuth 2.0, PAR, JWT, JWK, JWKS...
 - The identity token that is used for verification is obtained from the verification provider through a [PKCE](https://datatracker.ietf.org/doc/html/rfc7636) flow with [PAR](https://datatracker.ietf.org/doc/html/rfc9126).
 - Public keys (i.e. the response from the JWKS URI) for each verification provider are trusted on first use and stored.
+- The cache of trusted keys can be cleared (completely or by URI) via CLI with the new `clear-verification-keys` command.
 - The verification (`/v1/verification`) and registration (`/v1/registration`) controller APIs have experienced breaking changes.
 - Rate limiting is implemented when starting a verification session to prevent DoS to the verification provider.
