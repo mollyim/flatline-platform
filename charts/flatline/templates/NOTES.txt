@@ -25,11 +25,15 @@ Since you have chosen to use the development Traefik resources, you can find the
 
 {{ if .Values.whisperService.enabled -}}
 - Whisper Service: https://whisper.{{ .Values.global.hostname }}
+{{ if .Values.global.exposeAdmin -}}
 - Whisper Service Admin: https://whisper-admin.{{ .Values.global.hostname }}
+{{ end -}}
 {{ end -}}
 {{ if .Values.storageService.enabled -}}
 - Storage Service: https://storage.{{ .Values.global.hostname }}
+{{ if .Values.global.exposeAdmin -}}
 - Storage Service Admin: https://storage-admin.{{ .Values.global.hostname }}
+{{ end -}}
 {{ end -}}
 {{ if .Values.contactDiscoveryService.enabled -}}
 - Contact Discovery Service: https://cds.{{ .Values.global.hostname }}

@@ -35,11 +35,13 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
           port: {{ .Values.whisperService.service.ports.default.port }}
+    {{- if .Values.global.exposeAdmin }}
     - match: Host(`whisper-admin.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-whisper-service
           port: {{ .Values.whisperService.service.ports.admin.port }}
+    {{- end }}
     {{- end }}
     {{- if .Values.storageService.enabled }}
     - match: Host(`storage.{{ $hostname }}`)
@@ -47,11 +49,13 @@ spec:
       services:
         - name: {{ include "common.fullname" . }}-storage-service
           port: {{ .Values.storageService.service.ports.default.port }}
+    {{- if .Values.global.exposeAdmin }}
     - match: Host(`storage-admin.{{ $hostname }}`)
       kind: Rule
       services:
         - name: {{ include "common.fullname" . }}-storage-service
           port: {{ .Values.storageService.service.ports.admin.port }}
+    {{- end }}
     {{- end }}
     {{- if .Values.contactDiscoveryService.enabled }}
     - match: Host(`cds.{{ $hostname }}`)
