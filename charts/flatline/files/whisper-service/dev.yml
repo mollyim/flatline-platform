@@ -521,7 +521,7 @@ turn:
       - turn:%s:3478?transport=tcp
     credentialTtl: PT24H
     clientCredentialTtl: PT12H
-    hostname: turn.{{ .Values.global.hostname }}
+    hostname: {{ include "common.fullname" . }}-coturn
 
 linkDevice:
   secret: secret://linkDevice.secret
