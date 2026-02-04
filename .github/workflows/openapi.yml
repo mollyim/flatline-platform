@@ -28,7 +28,7 @@ jobs:
           ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          path: /tmp/flatline-whisper-service
+          path: flatline-whisper-service
       - name: Set up JDK 24
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
@@ -40,7 +40,7 @@ jobs:
           # Source: https://github.com/actions/setup-java/issues/356
           HOME: /root
       - name: Compile and Build OpenAPI File 
-        working-directory: /tmp/flatline-whisper-service
+        working-directory: flatline-whisper-service
         run: ./mvnw compile
       - name: Update Documentation
         env:
@@ -48,8 +48,10 @@ jobs:
         run: |
           git config user.email "github@molly.im"
           git config user.name "Documentation Updater"
+          cp flatline-whisper-service/api-doc/target/openapi/whisper-openapi.yaml /tmp/
+          rm -rf flatline-whisper-service
           git fetch origin gh-pages
           git checkout gh-pages
-          cp /tmp/flatline-whisper-service/api-doc/target/openapi/whisper-openapi.yaml .
+          cp /tmp/whisper-openapi.yaml .
           git diff --quiet || git commit -a -m "doc: update Whisper OpenAPI file"
           git push origin gh-pages -q
