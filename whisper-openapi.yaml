@@ -1,14 +1,12 @@
 openapi: 3.0.1
 info:
-  title: Signal Server API
+  title: Flatline Whisper API
   license:
     name: AGPL-3.0-only
     url: https://www.gnu.org/licenses/agpl-3.0.txt
 servers:
-- url: https://chat.signal.org
-  description: Production service
-- url: https://chat.staging.signal.org
-  description: Staging service
+- url: https://whisper.flatline.internal
+  description: Internal Service
 paths:
   /v1/accounts/account/{identifier}:
     head:
@@ -403,13 +401,13 @@ paths:
                 $ref: "#/components/schemas/AccountIdentityResponse"
       security:
       - authenticatedAccount: []
-  /v2/accounts/principal:
+  /v2/accounts/number:
     put:
       tags:
       - Account
-      summary: Change principal
-      description: Changes a principal for an existing account.
-      operationId: changePrincipal
+      summary: Change number
+      description: Changes a phone number for an existing account.
+      operationId: changeNumber
       parameters:
       - name: User-Agent
         in: header
@@ -419,12 +417,12 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/ChangePrincipalRequest"
+              $ref: "#/components/schemas/ChangeNumberRequest"
         required: true
       responses:
         "200":
-          description: The principal associated with the authenticated account was
-            changed successfully
+          description: The phone number associated with the authenticated account
+            was changed successfully
           content:
             application/json:
               schema:
@@ -465,14 +463,14 @@ paths:
               style: simple
       security:
       - authenticatedAccount: []
-  /v2/accounts/principal_name_identity_key_distribution:
+  /v2/accounts/phone_number_identity_key_distribution:
     put:
       tags:
       - Account
-      summary: Set principal-name identity keys
-      description: Updates key material for the principal-name identity for all devices
+      summary: Set phone-number identity keys
+      description: Updates key material for the phone-number identity for all devices
         and sends a synchronization message to companion devices
-      operationId: distributePrincipalNameIdentityKeys
+      operationId: distributePhoneNumberIdentityKeys
       parameters:
       - name: User-Agent
         in: header
@@ -482,7 +480,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PrincipalNameIdentityKeyDistributionRequest"
+              $ref: "#/components/schemas/PhoneNumberIdentityKeyDistributionRequest"
         required: true
       responses:
         "200":
@@ -518,18 +516,18 @@ paths:
                 $ref: "#/components/schemas/AccountDataReportResponse"
       security:
       - authenticatedAccount: []
-  /v2/accounts/principal_discoverability:
+  /v2/accounts/phone_number_discoverability:
     put:
       tags:
       - Account
-      summary: Sets whether the account should be discoverable by principal in the
-        directory.
-      operationId: setPrincipalDiscoverability
+      summary: Sets whether the account should be discoverable by phone number in
+        the directory.
+      operationId: setPhoneNumberDiscoverability
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/PrincipalDiscoverabilityRequest"
+              $ref: "#/components/schemas/PhoneNumberDiscoverabilityRequest"
         required: true
       responses:
         "204":
@@ -1420,7 +1418,7 @@ paths:
       - Certificate
       operationId: getDeliveryCertificate
       parameters:
-      - name: includePrincipal
+      - name: includeE164
         in: query
         schema:
           type: boolean
@@ -1741,7 +1739,7 @@ paths:
       - Devices
       summary: Link a device to an account
       description: |
-        Links a device to an account identified by a given principal.
+        Links a device to an account identified by a given phone number.
       operationId: linkDevice
       parameters:
       - name: Authorization
@@ -2201,8 +2199,8 @@ paths:
         ACI identity key.
 
         The username hash search response field is populated if it is found in the log and its mapped value matches
-        the provided ACI. The principal search response is populated similarly, with some additional requirements:
-        - The account associated with the provided ACI must be discoverable by principal.
+        the provided ACI. The E164 search response is populated similarly, with some additional requirements:
+        - The account associated with the provided ACI must be discoverable by phone number.
         - The provided unidentified access key must match the one on the account.
 
         Enforced unauthenticated endpoint.
@@ -2277,7 +2275,7 @@ paths:
       - Keys
       summary: Fetch public keys for another user
       description: Retrieves the public identity key and available device prekeys
-        for a specified account or principal-name identity
+        for a specified account or phone-number identity
       operationId: getDeviceKeys
       parameters:
       - name: Unidentified-Access-Key
@@ -2290,7 +2288,7 @@ paths:
           $ref: "#/components/schemas/GroupSendTokenHeader"
       - name: identifier
         in: path
-        description: the account or principal-name identifier to retrieve keys for
+        description: the account or phone-number identifier to retrieve keys for
         required: true
         schema:
           $ref: "#/components/schemas/ServiceIdentifier"
@@ -2373,7 +2371,7 @@ paths:
         allowEmptyValue: true
         schema:
           type: string
-          description: whether this operation applies to the account (aci) or principal-name
+          description: whether this operation applies to the account (aci) or phone-number
             (pni) identity
           default: aci
           enum:
@@ -3047,8 +3045,8 @@ paths:
         required: true
       responses:
         "200":
-          description: The principal associated with the authenticated account was
-            changed successfully
+          description: The phone number associated with the authenticated account
+            was changed successfully
           content:
             application/json:
               schema:
@@ -3723,13 +3721,10 @@ paths:
     post:
       tags:
       - Verification
-      summary: Creates a new verification session
+      summary: Creates a new verification session for a specific phone number
       description: |
-        Initiates a session to be able to verify a principal for account registration. Expects to receive an
-        authorization request for a chosen verification provider. Flatline will perform
-        PAR (i.e. pushed authorization request) with the chosen verification provider and return the resulting
-        authorization parameters to the client. The client is then expected to perform the authorization step and
-        request PATCH /session/{sessionId} with the token exchange parameters.
+        Initiates a session to be able to verify the phone number for account registration. Check the response and
+        submit requested information at PATCH /session/{sessionId}
       operationId: createSession
       requestBody:
         content:
@@ -3743,7 +3738,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateVerificationSessionResponse"
+                $ref: "#/components/schemas/VerificationSessionResponse"
         "422":
           description: The request did not pass validation
         "429":
@@ -3776,7 +3771,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateVerificationSessionResponse"
+                $ref: "#/components/schemas/VerificationSessionResponse"
         "400":
           description: Invalid session ID
         "404":
@@ -3788,10 +3783,10 @@ paths:
       - Verification
       summary: Update a registration verification session
       description: |
-        Updates the session with the token exchange parameters obtained by the client after completing the
-        authorization step. Flatline will then exchange those parameters for a token from the verification provider,
-        verify the signature and contents of the token as configured and create a verified registration session for an
-        the principal matching the value in the token claim configured as the principal for the verification provider.
+        Updates the session with requested information like an answer to a push challenge or captcha.
+        If `requestedInformation` in the response is empty, and `allowedToRequestCode` is `true`, proceed to call
+        `POST /session/{sessionId}/code`. If `requestedInformation` is empty and `allowedToRequestCode` is `false`,
+        then the caller must create a new verification session.
       operationId: updateSession
       parameters:
       - name: sessionId
@@ -3815,12 +3810,10 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UpdateVerificationSessionResponse"
+                $ref: "#/components/schemas/VerificationSessionResponse"
         "403":
-          description: The information provided was not accepted (e.g token exchange
-            failed)
-        "404":
-          description: Session with the specified ID could not be found
+          description: The information provided was not accepted (e.g push challenge
+            or captcha verification failed)
         "422":
           description: The request did not pass validation
         "429":
@@ -3836,23 +3829,154 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/CreateVerificationSessionResponse"
-  /v1/verification:
-    get:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+  /v1/verification/session/{sessionId}/code:
+    put:
       tags:
       - Verification
-      summary: Retrieve the list of verification providers
+      summary: Submit a verification code
       description: |
-        Retrieves the list of verification providers that can be used to start a verification session.
-        This list includes the details that the client needs to communicate with each provider.
-      operationId: getVerificationConfiguration
+        Submits a verification code received via SMS or voice for verification
+      operationId: verifyCode
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: User-Agent
+        in: header
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitVerificationCodeRequest"
+        required: true
       responses:
         "200":
-          description: The list of providers was retrieved
+          description: |
+            The request to check a verification code was processed (though the submitted code may not be the correct code);
+            the session metadata will indicate whether the submitted code was correct
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VerificationProvidersResponse"
+                $ref: "#/components/schemas/VerificationSessionResponse"
+        "400":
+          description: Invalid session ID or verification  code
+        "404":
+          description: Session with the specified ID could not be found
+        "409":
+          description: The session is already verified or no code has been requested
+            yet for this session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+        "429":
+          description: |
+            Too many attempts; the caller is not permitted to submit a verification code at this time and may need to wait
+            before trying again; if the session metadata does not specify a time at which the caller may try again, then the
+            caller has exhausted their permitted attempts and must create a new verification session.
+          headers:
+            Retry-After:
+              description: "If present, an positive integer indicating the number\
+                \ of seconds before a subsequent attempt could succeed"
+              style: simple
+              schema:
+                type: integer
+                format: int32
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+    post:
+      tags:
+      - Verification
+      summary: Request a verification code
+      description: |
+        Sends a verification code to the phone number associated with the specified session via SMS or phone call.
+        This endpoint can only be called when the session metadata includes "allowedToRequestCode = true"
+      operationId: requestVerificationCode
+      parameters:
+      - name: sessionId
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: User-Agent
+        in: header
+        schema:
+          type: string
+      - name: Accept-Language
+        in: header
+        description: Ordered list of languages in which the client prefers to receive
+          SMS or voice verification messages
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationCodeRequest"
+        required: true
+      responses:
+        "200":
+          description: Verification code was successfully sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+        "400":
+          description: Invalid session ID
+        "404":
+          description: Session with the specified ID could not be found
+        "409":
+          description: The session is already verified or not in a state to request
+            a code because requested information hasn't been provided yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+        "418":
+          description: "The request to send a verification code with the given transport\
+            \ could not be fulfilled, but may succeed with a different transport"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+        "422":
+          description: Request did not pass validation
+        "429":
+          description: |
+            Too may attempts; the caller is not permitted to send a verification code via the requested channel at this time
+            and may need to wait before trying again; if the session metadata does not specify a time at which the caller may
+            try again, then the caller has exhausted their permitted attempts and must either try a different transport or
+            create a new verification session.
+          headers:
+            Retry-After:
+              description: "If present, an positive integer indicating the number\
+                \ of seconds before a subsequent attempt could succeed"
+              style: simple
+              schema:
+                type: integer
+                format: int32
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationSessionResponse"
+        "440":
+          description: |
+            The attempt to send a verification code failed because an external service (e.g. the SMS provider) refused to
+            deliver the code. This may be a temporary or permanent failure, as indicated in the response body. If temporary,
+            clients may try again after a reasonable delay. If permanent, clients should not retry the request and should
+            communicate the permanent failure to the end user. Permanent failures may result in the server disallowing all
+            future attempts to request or submit verification codes (since those attempts would be all but guaranteed to fail).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SendVerificationCodeFailureResponse"
 components:
   schemas:
     AciServiceIdentifier:
@@ -3862,7 +3986,7 @@ components:
       - $ref: "#/components/schemas/ServiceIdentifier"
     PniServiceIdentifier:
       type: string
-      description: An identifier for an account based on the account's principal name
+      description: An identifier for an account based on the account's phone number
         identifier (PNI)
       allOf:
       - $ref: "#/components/schemas/ServiceIdentifier"
@@ -3970,7 +4094,7 @@ components:
             - STORAGE_SERVICE_RECORD_KEY_ROTATION
             - ATTACHMENT_BACKFILL
             - SPARSE_POST_QUANTUM_RATCHET
-        discoverableByPrincipal:
+        discoverableByPhoneNumber:
           type: boolean
         recoveryPassword:
           type: string
@@ -4040,12 +4164,12 @@ components:
           type: string
           description: the account identifier for this account
           format: uuid
-        principal:
+        number:
           type: string
-          description: the principal associated with this account
+          description: the phone number associated with this account
         pni:
           type: string
-          description: the account identifier for this account's principal-name identity
+          description: the account identifier for this account's phone-number identity
           format: uuid
         usernameHash:
           type: string
@@ -4148,14 +4272,14 @@ components:
       description: |
         Information about the current Registration lock and SVR credentials. With a correct PIN, the credentials can
         be used to recover the secret used to derive the registration lock password.
-    ChangePrincipalRequest:
+    ChangeNumberRequest:
       required:
       - deviceMessages
       - devicePniPqLastResortPrekeys
       - devicePniSignedPrekeys
+      - number
       - pniIdentityKey
       - pniRegistrationIds
-      - principal
       type: object
       properties:
         sessionId:
@@ -4166,15 +4290,16 @@ components:
         recoveryPassword:
           type: string
           description: |-
-            The base64-encoded recovery password for the new principal, if using a recovery password to authenticate this request.
+            The base64-encoded recovery password for the new phone number, if using a recovery password to authenticate this request.
             Must not be combined with `sessionId`.
-        principal:
+        number:
           minLength: 1
           type: string
-          description: the new principal for this account
+          description: the new phone number for this account
         reglock:
           type: string
-          description: "the registration lock password for the new principal, if necessary"
+          description: "the registration lock password for the new phone number, if\
+            \ necessary"
         pniIdentityKey:
           $ref: "#/components/schemas/IdentityKey"
         deviceMessages:
@@ -4206,10 +4331,10 @@ components:
           type: object
           additionalProperties:
             type: integer
-            description: "the new principal-name identity registration ID for each\
-              \ device on the account, including this one"
+            description: "the new phone-number-identity registration ID for each device\
+              \ on the account, including this one"
             format: int32
-          description: "the new principal-name identity registration ID for each device\
+          description: "the new phone-number-identity registration ID for each device\
             \ on the account, including this one"
     ECPublicKey:
       type: object
@@ -4236,7 +4361,7 @@ components:
         signature:
           type: string
           description: |
-            The signature of the serialized `publicKey` with the account (or principal-name identity)'s identity key, base64-encoded.
+            The signature of the serialized `publicKey` with the account (or phone-number identity)'s identity key, base64-encoded.
       description: |
         A signed EC pre-key to be associated with this account's PNI.
     IdentityKey:
@@ -4284,10 +4409,10 @@ components:
         signature:
           type: string
           description: |
-            The signature of the serialized `publicKey` with the account (or principal-name identity)'s identity key, base64-encoded.
+            The signature of the serialized `publicKey` with the account (or phone-number identity)'s identity key, base64-encoded.
       description: |
         A signed Kyber-1024 "last resort" pre-key to be associated with this account's PNI.
-    PrincipalNameIdentityKeyDistributionRequest:
+    PhoneNumberIdentityKeyDistributionRequest:
       required:
       - deviceMessages
       - devicePniPqLastResortPrekeys
@@ -4344,7 +4469,7 @@ components:
     AccountDataReport:
       type: object
       properties:
-        principal:
+        phoneNumber:
           type: string
         badges:
           type: array
@@ -4352,7 +4477,7 @@ components:
             $ref: "#/components/schemas/BadgeDataReport"
         allowSealedSenderFromAnyone:
           type: boolean
-        findAccountByPrincipal:
+        findAccountByPhoneNumber:
           type: boolean
     AccountDataReportResponse:
       type: object
@@ -4392,12 +4517,12 @@ components:
           format: date-time
         userAgent:
           type: string
-    PrincipalDiscoverabilityRequest:
+    PhoneNumberDiscoverabilityRequest:
       required:
-      - discoverableByPrincipal
+      - discoverableByPhoneNumber
       type: object
       properties:
-        discoverableByPrincipal:
+        discoverableByPhoneNumber:
           type: boolean
     UploadDescriptorResponse:
       type: object
@@ -5110,17 +5235,36 @@ components:
           description: "The commitment index derived from a previous search request,\
             \ encoded in standard unpadded base64"
           format: byte
+    E164Monitor:
+      required:
+      - commitmentIndex
+      - value
+      type: object
+      properties:
+        value:
+          minLength: 1
+          type: string
+          description: The e164-formatted phone number to monitor
+        entryPosition:
+          type: integer
+          description: A log tree position maintained by the client for the e164.
+          format: int64
+        commitmentIndex:
+          type: string
+          description: "The commitment index derived from a previous search request,\
+            \ encoded in standard unpadded base64"
+          format: byte
     KeyTransparencyMonitorRequest:
       required:
       - aci
-      - principal
+      - e164
       - usernameHash
       type: object
       properties:
         aci:
           $ref: "#/components/schemas/AciMonitor"
-        principal:
-          $ref: "#/components/schemas/PrincipalMonitor"
+        e164:
+          $ref: "#/components/schemas/E164Monitor"
         usernameHash:
           $ref: "#/components/schemas/UsernameHashMonitor"
         lastNonDistinguishedTreeHeadSize:
@@ -5131,25 +5275,6 @@ components:
           type: integer
           description: The distinguished tree head size to prove consistency against.
           format: int64
-    PrincipalMonitor:
-      required:
-      - commitmentIndex
-      - value
-      type: object
-      properties:
-        value:
-          minLength: 1
-          type: string
-          description: The principal to monitor
-        entryPosition:
-          type: integer
-          description: A log tree position maintained by the client for the principal.
-          format: int64
-        commitmentIndex:
-          type: string
-          description: "The commitment index derived from a previous search request,\
-            \ encoded in standard unpadded base64"
-          format: byte
     UsernameHashMonitor:
       required:
       - commitmentIndex
@@ -5191,9 +5316,9 @@ components:
         aci:
           type: string
           description: An identifier for an account based on the account's ACI
-        principal:
+        e164:
           type: string
-          description: The principal to look up
+          description: The E164-formatted phone number to look up
         usernameHash:
           type: string
           description: "The username hash to look up, encoded in web-safe unpadded\
@@ -5698,7 +5823,7 @@ components:
         paymentAddress:
           type: string
           format: byte
-        principalSharing:
+        phoneNumberSharing:
           type: string
           format: byte
     CredentialProfileResponse:
@@ -5737,7 +5862,7 @@ components:
         paymentAddress:
           type: string
           format: byte
-        principalSharing:
+        phoneNumberSharing:
           type: string
           format: byte
     BatchIdentityCheckResponse:
@@ -5802,7 +5927,7 @@ components:
           type: array
           items:
             type: string
-        principalSharing:
+        phoneNumberSharing:
           type: string
           format: byte
         avatarChange:
@@ -5834,12 +5959,12 @@ components:
           type: string
           description: the account identifier for this account
           format: uuid
-        principal:
+        number:
           type: string
-          description: the principal associated with this account
+          description: the phone number associated with this account
         pni:
           type: string
-          description: the account identifier for this account's principal-name identity
+          description: the account identifier for this account's phone-number identity
           format: uuid
         usernameHash:
           type: string
@@ -5966,13 +6091,13 @@ components:
             \ -> 'match'/'no-match'/'invalid'`"
     AuthCheckRequest:
       required:
-      - principal
+      - number
       - tokens
       type: object
       properties:
-        principal:
+        number:
           type: string
-          description: The principal.
+          description: The e164-formatted phone number.
         tokens:
           maxItems: 10
           minItems: 0
@@ -6312,126 +6437,139 @@ components:
         level:
           type: integer
           format: int64
-    CreateVerificationSessionResponse:
+    VerificationSessionResponse:
       required:
-      - authorizationEndpoint
-      - clientId
+      - allowedToRequestCode
       - id
-      - requestUri
-      - requestUriLifetime
       - verified
       type: object
       properties:
         id:
           type: string
-          description: A URL-safe ID for the verification session
-        authorizationEndpoint:
-          type: string
-          description: Location of the authorization endpoint for the verification
-            provider chosen by the client
-        clientId:
-          type: string
-          description: Identifier of the client requesting verification to be used
-            in PAR
-        requestUri:
-          type: string
-          description: Location of the pushed authorization request
-        requestUriLifetime:
+          description: A URL-safe ID for the session
+        nextSms:
           type: integer
-          description: Seconds to expiration of the pushed authorization request
+          description: Duration in seconds after which next SMS can be requested for
+            this session
           format: int64
+        nextCall:
+          type: integer
+          description: Duration in seconds after which next voice call can be requested
+            for this session
+          format: int64
+        nextVerificationAttempt:
+          type: integer
+          description: Duration in seconds after which the client can submit a verification
+            code for this session
+          format: int64
+        allowedToRequestCode:
+          type: boolean
+          description: Whether it is allowed to request a verification code for this
+            session
+        requestedInformation:
+          type: array
+          description: A list of requested information that the client needs to submit
+            before requesting code delivery
+          items:
+            type: string
+            description: A list of requested information that the client needs to
+              submit before requesting code delivery
+            enum:
+            - pushChallenge
+            - captcha
         verified:
           type: boolean
           description: Whether this session is verified
     CreateVerificationSessionRequest:
       required:
-      - codeChallenge
-      - providerId
-      - redirectUri
-      - state
+      - number
       type: object
       properties:
-        providerId:
+        number:
           minLength: 1
           type: string
-          description: Identifier of the provider used for the principal verification
-        codeChallenge:
-          minLength: 1
+          description: The e164-formatted phone number to be verified
+        pushToken:
           type: string
-          description: Value provided by the client to be used in the PKCE challenge
-        state:
-          minLength: 1
+          description: The APNs or FCM device token to which a push challenge can
+            be sent
+        pushTokenType:
           type: string
-          description: Value provided by the client to verify authorization responses
-        redirectUri:
-          minLength: 1
+          description: The type of push token
+          enum:
+          - apn
+          - fcm
+        pushChallenge:
           type: string
-          description: Location provided by the client to be redirected after authorization
-    VerificationProvidersResponse:
-      type: object
-      properties:
-        providers:
-          type: array
-          description: information about each verification provider
-          items:
-            $ref: "#/components/schemas/VerificationProvidersResponseItem"
-    VerificationProvidersResponseItem:
-      type: object
-      properties:
-        id:
+          description: Value received by the device in the push challenge
+        captcha:
           type: string
-          description: the ID of the verification provider
-        name:
+          description: Captcha token returned after solving a captcha challenge
+        mcc:
           type: string
-          description: the display name of the verification provider
-        issuer:
+          description: Mobile country code of the phone subscriber
+        mnc:
           type: string
-          description: the issuer location of the verification provider
-        authorizationEndpoint:
-          type: string
-          description: the authorization endpoint of the verification provider
-        principalClaim:
-          type: string
-          description: the claim from the verification provider to use as the account
-            principal
-      description: information about each verification provider
-    UpdateVerificationSessionResponse:
-      required:
-      - id
-      - principal
-      - verified
-      type: object
-      properties:
-        id:
-          type: string
-          description: A URL-safe ID for the verification session
-        principal:
-          type: string
-          description: The principal that has been verified with the verification
-            session
-        verified:
-          type: boolean
-          description: Whether this session is verified
+          description: Mobile network code of the phone subscriber
     UpdateVerificationSessionRequest:
+      type: object
+      properties:
+        pushToken:
+          type: string
+          description: The APNs or FCM device token to which a push challenge can
+            be sent
+        pushTokenType:
+          type: string
+          description: The type of push token
+          enum:
+          - apn
+          - fcm
+        pushChallenge:
+          type: string
+          description: Value received by the device in the push challenge
+        captcha:
+          type: string
+          description: Captcha token returned after solving a captcha challenge
+        mcc:
+          type: string
+          description: Mobile country code of the phone subscriber
+        mnc:
+          type: string
+          description: Mobile network code of the phone subscriber
+    SendVerificationCodeFailureResponse:
+      type: object
+      properties:
+        reason:
+          type: string
+          enum:
+          - providerUnavailable
+          - providerRejected
+          - illegalArgument
+        permanentFailure:
+          type: boolean
+    VerificationCodeRequest:
+      required:
+      - client
+      - transport
+      type: object
+      properties:
+        transport:
+          type: string
+          description: Transport via which to send the verification code
+          enum:
+          - sms
+          - voice
+        client:
+          type: string
+          description: Client type to facilitate platform-specific SMS verification
+    SubmitVerificationCodeRequest:
       required:
       - code
-      - codeVerifier
-      - state
       type: object
       properties:
         code:
           minLength: 1
           type: string
-          description: Authorization code used to obtain a token from the verification
-            provider
-        codeVerifier:
-          minLength: 1
-          type: string
-          description: Value provided by the client as the PKCE proof
-        state:
-          minLength: 1
-          type: string
-          description: Value provided by the client to verify authorization responses
   securitySchemes:
     authenticatedAccount:
       type: http
