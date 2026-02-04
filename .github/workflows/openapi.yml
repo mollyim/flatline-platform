@@ -1,0 +1,57 @@
+name: Whisper OpenAPI 
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'flatline-whisper-service'
+      - '.github/workflows/doc.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  whisper-openapi:
+    name: Build Whisper OpenAPI File 
+    runs-on: ubuntu-latest
+    container: ubuntu:22.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: flatline-whisper-service
+    steps:
+      - name: Install Git
+        working-directory: /
+        run: |
+          apt update && apt install -y git
+      - name: Checkout Sources
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          submodules: "recursive"
+      - name: Set up JDK 24
+        uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
+        with:
+          distribution: 'temurin'
+          java-version: 24
+          cache: 'maven'
+        env:
+          # Work around incorrect HOME in container runners.
+          # Source: https://github.com/actions/setup-java/issues/356
+          HOME: /root
+      - name: Compile and Build OpenAPI File 
+        run: ./mvnw compile
+      - name: Update Documentation
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cp -r api-doc/target/openapi/whisper-openapi.yaml /tmp/
+          git config user.email "github@molly.im"
+          git config user.name "Documentation Updater"
+          git fetch origin gh-pages
+          git checkout gh-pages
+          cp /tmp/whisper-openapi.yaml .
+          git diff --quiet || git commit -a -m "doc: update Whisper OpenAPI file"
+          git push origin gh-pages -q
