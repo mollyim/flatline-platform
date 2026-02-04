@@ -31,7 +31,6 @@ jobs:
         with:
           clean: true
           repository: mollyim/flatline-whisper-service
-          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           path: flatline-whisper-service
