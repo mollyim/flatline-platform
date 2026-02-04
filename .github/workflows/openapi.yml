@@ -21,7 +21,6 @@ jobs:
         run: |
           apt update && apt install -y git
       - name: Checkout Flatline Whisper Service
-        working-directory: /tmp/flatline-whisper-service
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           clean: true
@@ -29,7 +28,7 @@ jobs:
           ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-          path: flatline-whisper-service
+          path: /tmp/flatline-whisper-service
       - name: Set up JDK 24
         uses: actions/setup-java@3a4f6e1af504cf6a31855fa899c6aa5355ba6c12 # v4.7.0
         with:
