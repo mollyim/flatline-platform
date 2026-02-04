@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-    paths:
-      - 'flatline-whisper-service'
-      - '.github/workflows/doc.yml'
   workflow_dispatch:
 
 permissions:
@@ -18,19 +15,18 @@ jobs:
     runs-on: ubuntu-latest
     container: ubuntu:22.04
     timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: flatline-whisper-service
     steps:
       - name: Install Git
         working-directory: /
         run: |
           apt update && apt install -y git
       - name: Checkout Flatline Whisper Service
+        working-directory: /tmp/flatline-whisper-service
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           clean: true
           repository: mollyim/flatline-whisper-service
+          ref: main
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
           path: flatline-whisper-service
@@ -45,16 +41,16 @@ jobs:
           # Source: https://github.com/actions/setup-java/issues/356
           HOME: /root
       - name: Compile and Build OpenAPI File 
+        working-directory: /tmp/flatline-whisper-service
         run: ./mvnw compile
       - name: Update Documentation
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          cp -r api-doc/target/openapi/whisper-openapi.yaml /tmp/
           git config user.email "github@molly.im"
           git config user.name "Documentation Updater"
           git fetch origin gh-pages
           git checkout gh-pages
-          cp /tmp/whisper-openapi.yaml .
+          cp /tmp/flatline-whisper-service/api-doc/target/openapi/whisper-openapi.yaml .
           git diff --quiet || git commit -a -m "doc: update Whisper OpenAPI file"
           git push origin gh-pages -q
