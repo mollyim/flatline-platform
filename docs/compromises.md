@@ -30,7 +30,17 @@ The Kubernetes resources installed by the Helm chart have not been hardened. I a
 
 ### Registration
 
-See the [Registration Service](architecture.md#registration-service) section in the architecture documentation.
+The registration service component from the original implementation has been completely removed in favor of a new [registration](registration.md) process. In the Flatline prototype, this registration process still has some limitations. Most relevantly, an account that was verified with a verification provider cannot be re-registered with a different verification provider. There is currently no mechanism for clients to perform this migration.
+
+On the other hand, it is possible to change the principal of an account with the same verification provider, if the new principal can be verified for the same identity subject. For more details about these concepts, see the [registration documentation](registration.md).
+
+### Country Detection
+
+Since Flatline is no longer tied to phone numbers, it cannot make assumptions based on the E164 format. This means that features that relied on inferring the country from the country code are not available in the Flatline prototype. This mainly means that metrics are not collected based on the account country, abuse rules cannot use the account country, service notifications do not attempt to find the most suitable time based on the account time zone and experiments based on the account country cannot be performed in the Flatline prototype.
+
+### Link Shortening
+
+In the Flatline prototype, no link shortening service has been deployed. This service is used to generate links such as those used to share a contact via QR code. Contacts can still be shared normally by simply sharing the contact username through the same channel where the shortened link would have been shared.
 
 ### Key Recovery
 

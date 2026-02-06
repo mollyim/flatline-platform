@@ -37,7 +37,6 @@ Some of those features may be subject to the [compromises](docs/compromises.md) 
 - Profile Customization
 - Voice Notes
 - Stories
-- Location Sharing
 
 ### Non-Features
 
