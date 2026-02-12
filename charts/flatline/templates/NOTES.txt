@@ -34,6 +34,7 @@ Since you have chosen to use the development Traefik resources, you can find the
 {{ if .Values.global.exposeAdmin -}}
 - Storage Service Admin: https://storage-admin.{{ .Values.global.hostname }}
 {{ end -}}
+{{ end -}}
 {{ if .Values.callingServiceFrontend.enabled -}}
 - SFU: https://sfu.{{ .Values.global.hostname }}
 {{ end -}}
