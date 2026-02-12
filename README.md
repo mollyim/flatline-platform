@@ -22,6 +22,12 @@ This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?r
 - [**Evaluation**](docs/evaluation.md): To learn how to evaluate the Flatline prototype with Molly.
 - [**Development**](docs/development.md): To learn how to develop and customize the Flatline prototype.
 
+### Whisper API
+
+Clients mainly use the Whisper API to communicate with Flatline.
+
+The specification for the modified Whisper API is [automatically generated](https://github.com/mollyim/flatline-platform/blob/main/.github/workflows/openapi.yml) and can be found [here](https://molly.im/flatline-platform/).
+
 ## Features
 
 The following is a non-comprehensive list of client features currently supported by the Flatline prototype.
