@@ -21,6 +21,7 @@ This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?r
 - [**Installation**](docs/installation.md): To learn how to install the Flatline prototype in Kubernetes.
 - [**Evaluation**](docs/evaluation.md): To learn how to evaluate the Flatline prototype with Molly.
 - [**Development**](docs/development.md): To learn how to develop and customize the Flatline prototype.
+- [**Registration**](docs/registration.md): To learn about the account registration changes in Flatline.
 
 ### Whisper API
 
@@ -43,7 +44,6 @@ Some of those features may be subject to the [compromises](docs/compromises.md) 
 - Profile Customization
 - Voice Notes
 - Stories
-- Location Sharing
 
 ### Non-Features
 
@@ -71,14 +71,6 @@ Flatline is composed of multiple services organized under Flatline Platform as s
   - Submodule: `flatline-storage-service`
   - Repository: https://github.com/mollyim/flatline-storage-service
   - Upstream: https://github.com/signalapp/storage-service
-- **Registration Service**
-  - Submodule: `flatline-registration-service`
-  - Repository: https://github.com/mollyim/flatline-registration-service
-  - Upstream: https://github.com/signalapp/registration-service
-- **Contact Discovery Service**
-  - Submodule: `flatline-contact-discovery-service`
-  - Repository: https://github.com/mollyim/flatline-contact-discovery-service
-  - Upstream: https://github.com/signalapp/ContactDiscoveryService-Icelake
 - **Calling Service**
   - Submodule: `flatline-calling-service`
   - Repository: https://github.com/mollyim/flatline-calling-service

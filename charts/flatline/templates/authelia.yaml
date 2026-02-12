@@ -1,5 +1,5 @@
-{{- $componentName := "registration-service" -}}
-{{- $componentValues := .Values.registrationService -}}
+{{- $componentName := "authelia" -}}
+{{- $componentValues := .Values.authelia -}}
 
 {{- $ctx := dict
     "Release"          .Release
@@ -17,5 +17,7 @@
 {{ template "common.deployment" $ctx }}
 ---
 {{ template "common.service" $ctx }}
+---
+{{ template "common.configMap" $ctx }}
 
 {{- end -}}

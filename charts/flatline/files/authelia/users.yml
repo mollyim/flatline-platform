@@ -1,0 +1,9 @@
+users:
+  example:
+    disabled: false
+    displayname: 'Example'
+    # Digest of "example".
+    password: '$pbkdf2-sha512$310000$YzhwNzhuN3BVTWxuMGp6dmQ0YUs0UQ$COCIOtKhOc8lHVt5ju1pttvZUNhyapqIHBaNQ.NvLnLhU/Dr7yON8bHd4sjYkpAybhQdQnSV2.Zzx5dz8LNwNg' 
+    email: 'example@{{ .Values.global.hostname }}'
+    groups:
+      - 'users'

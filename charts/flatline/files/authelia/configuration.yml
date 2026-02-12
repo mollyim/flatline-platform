@@ -1,0 +1,109 @@
+server:
+  address: 'tcp://:{{ .componentValues.service.ports.default.port }}'
+
+log:
+  level: 'debug'
+
+identity_validation:
+  reset_password:
+    jwt_secret: '3f6b54acfe133185fc48556485ef0a3eea67145d'
+
+authentication_backend:
+  file:
+    path: '/config/users.yml'
+
+access_control:
+  default_policy: 'deny'
+  rules:
+    - domain: 'whisper.{{ .Values.global.hostname }}'
+      policy: 'one_factor'
+
+session:
+  secret: 'c386c9372a3665feca4b568384cd35f8774797e4'
+  cookies:
+    - name: 'authelia'
+      domain: '{{ .Values.global.hostname }}'
+      authelia_url: 'https://authelia.{{ .Values.global.hostname }}'
+      expiration: '1 hour'
+      inactivity: '5 minutes'
+      # TODO: Replace placeholder.
+      default_redirection_url: 'https://whisper-admin.{{ .Values.global.hostname }}'
+
+regulation:
+  max_retries: 3
+  find_time: '2 minutes'
+  ban_time: '5 minutes'
+
+storage:
+  encryption_key: '10f55c52ee51e3487d2d3c4b411117b79e942430'
+  local:
+    path: '/config/db.sqlite3'
+
+notifier:
+  filesystem:
+    filename: '/config/notification.txt'
+
+identity_providers:
+  oidc:
+    hmac_secret: '55407d673535e8c37ff7b111bf62dc24e2038f00'
+    # Required for Flatline.
+    enforce_pkce: 'always'
+    # Required for Flatline.
+    require_pushed_authorization_requests: true
+    jwks:
+      - key_id: 'flatline-authelia'
+        algorithm: 'RS256'
+        use: 'sig'
+        # Insecure private key matching the following public key:
+        # -----BEGIN PUBLIC KEY-----
+        # MIIBITANBgkqhkiG9w0BAQEFAAOCAQ4AMIIBCQKCAQBoUOhDPWzmpG/DhmsGHBWh
+        # WvzoMq+0qteP7QiyXStfCpRko+uYr3ScoJCHlKo0bgE2VI5uMNm7WluD4zSCtwYM
+        # c1nzdjwLn9Cdx7bKd8DKOvh85RJ+QqbBhW1b7PiLlKeE7WPTrr4AcUwKT0C2q49r
+        # QpiasFawBEAz+ga9EdpDTynd5vZUKk0zUwPqbW+X63qIo/J21UqVvIPgi4KUY+1Q
+        # utEnwHgHHQkCI7PdMdclzq89ec/OOzIWOYNpbUi1xAnkyYDBazSwfRsrodTfJ5xh
+        # nA+N0cG+Wg3NDONg83cMtaQi6l2NH5EQftaLNgPWhK+/c9LG6ixnSQYhbQ6LKREb
+        # AgMBAAE=
+        # -----END PUBLIC KEY-----
+        key: |
+          -----BEGIN RSA PRIVATE KEY-----
+          MIIEoQIBAAKCAQBoUOhDPWzmpG/DhmsGHBWhWvzoMq+0qteP7QiyXStfCpRko+uY
+          r3ScoJCHlKo0bgE2VI5uMNm7WluD4zSCtwYMc1nzdjwLn9Cdx7bKd8DKOvh85RJ+
+          QqbBhW1b7PiLlKeE7WPTrr4AcUwKT0C2q49rQpiasFawBEAz+ga9EdpDTynd5vZU
+          Kk0zUwPqbW+X63qIo/J21UqVvIPgi4KUY+1QutEnwHgHHQkCI7PdMdclzq89ec/O
+          OzIWOYNpbUi1xAnkyYDBazSwfRsrodTfJ5xhnA+N0cG+Wg3NDONg83cMtaQi6l2N
+          H5EQftaLNgPWhK+/c9LG6ixnSQYhbQ6LKREbAgMBAAECggEAIwlpuYvcE+uPDmEL
+          eVXdfgCNiX/cvBXVqSW4EhBxDM8E4HieHP5xcFoNsTwhntKD3bewzxnhR6glrLqX
+          XIAUrAHiaH+B03WuIBCAOKjYPBRqeaiG+ZlxYPZrsMB7Coa3bVI+gU7jykpDfAL6
+          fWBKH4CSuQIZW61R0yNbOA3S/WAetX91NOepKDMV19mhUuO+Iju6Ze+6aHnyTxA1
+          AEFPpknYtpcTuOHQn3R92bp/g2mzqmAJmo4cTfy8T8NCjxK2lv9pAxCrf0BYw5e/
+          +3RyH+7hF+sgboCH8jO0vqQc7C/TX8rbZn6jbnJh9CJTfVTmsXJAkQ6sdkGzHkTf
+          rweGoQKBgQC6mtc9BfJLuyWJ6rK3R+Cugwk6213KXD+aWJ8bzMqrsq8o0yOBQvSn
+          tNUttusdaioeEiiq/RjJUFl/kuwdrGewIMRA3sEalCsnTunMZeqMmNyBjfzyRn+r
+          k2ELjd4mGd0fBN0SfzJ3uFwypuSVUqtMTw0PdgG1c3ClFhLhtIih9QKBgQCPHAGA
+          9ytr3Mw50Ej2+BtYoQ2FfF3dQyj1JjO3TPHg0FD77AnXLfkZInLjNds/69LRmT9T
+          rdQ45xQLUmR8GAvaAG1Esdhn/HSoCQABLd76zJkGLLh5wl315Q4m+XPNtkSXW5Jx
+          avFPV2qaI9CTUP+I3EU+venXtBZrvow1QngszwKBgGGVV7mxwmOYGqlk8tCl5flc
+          zRbaYNHSK/CrJ4mCLvpbFv5ia87NFOQezNx7K7jWK/BNzracZLniKutsCc36ur6A
+          ZCEIXDNqCKclvV4GbgHYbnfRqNWJyHoROE6ygdmq7Ner03A41EuHPa+/Vwo/kRT2
+          wf2z2HDrTZ0HThh6MHmBAoGAUijY8Cp3AkjT8skSar9MK9jig2VAGjxpcjzJag3B
+          u7i9FbSQfboGDZkKbklII22HLhAWHDtq4HRBvLJDwD6p5zFhihO0UxbL/oCUQRkN
+          r9zwaWwZSMX+3aHwOw3xnwNqY58N9xFXkp50NCQlpb3VxsP2+Stc6hqY2KifpCAS
+          EF8CgYBLoeDythtlnnBi8dwtqIMZ4N3W4+raDgF8XAZtHBCWMYD9XXDtbMGu+z+a
+          eJ67y08778b7CJJFcJil5qOnTog687EgGlWx26AglP371Jt5naDvQ69dsyYrWxAx
+          b6FEnEEK6U2B4iyu7ZMoYvQ9uC64704BSUFh3wmmbXyxvkAbzA==
+          -----END RSA PRIVATE KEY-----
+    clients:
+      - client_id: 'df5a4af6-56da-4b54-bea6-5c9473d42cdb'
+        client_name: 'Flatline'
+        # Digest of "1c61c5ca70da310332916778e95622dd".
+        client_secret: '$pbkdf2-sha512$310000$YzhwNzhuN3BVTWxuMGp6dmQ0YUs0UQ$c0orVYk50ljSw9U5oE6q.fkNuFe0EEzjRErmwRV3kazGffGKlRZXE0pIT42LbgiNDPRIFQEgSiUeJYQ.jwrGdQ'
+        redirect_uris:
+          - 'https://whisper.{{ .Values.global.hostname }}/v1/registration/callback'
+        scopes:
+          - openid
+          - email
+          - profile
+        grant_types:
+          - authorization_code
+        response_types:
+          - code
