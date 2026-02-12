@@ -11,6 +11,9 @@ global:
   # This address used by components related to multimedia calling which must advertise their address to clients.
   # The default value, "10.0.2.2", assumes clients running on the Android Emulator and Flatline on the host.
   advertisedAddress: "10.0.2.2"
+  # exposeAdmin defines whether or not administration endpoints should be exposed through Traefik.
+  # The default value, "true", assumes that Flatline is deployed locally for experimentation.
+  exposeAdmin: true
 # common defines shared values for this chart.
 common:
   # defaultInitContainer defines the values to be used by default in various init containers.
