@@ -21,6 +21,7 @@ This repository holds the [artifacts](https://github.com/orgs/mollyim/packages?r
 - [**Installation**](docs/installation.md): To learn how to install the Flatline prototype in Kubernetes.
 - [**Evaluation**](docs/evaluation.md): To learn how to evaluate the Flatline prototype with Molly.
 - [**Development**](docs/development.md): To learn how to develop and customize the Flatline prototype.
+- [**Registration**](docs/registration.md): To learn about the account registration changes in Flatline.
 
 ## Features
 
