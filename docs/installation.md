@@ -40,6 +40,28 @@ helm install $HELM_RELEASE ./charts/flatline
 
 When installation succeeds, follow the printed instructions to reach the deployed Flatline components.
 
+### Kubernetes cluster without Traefik
+
+If you are using a Kubernetes cluster that does not ship a Traefik pod by default, like [minikube](https://minikube.sigs.k8s.io/docs/), you can use the Traefik chart:
+
+- Add Traefik's chart repository:
+
+```console
+helm repo add traefik https://traefik.github.io/charts
+helm repo update
+```
+
+- Install the Traefik chart:
+
+```console
+helm install traefik ./charts/traefik
+```
+
+- You may need to remove `traefikResources.valuesOverride` from the flatline values.
+
+Resources:
+- <https://github.com/traefik/traefik-helm-chart>
+
 ### Customizing the Installation
 
 The Flatline chart provides several options to customize the installation by overriding default values.
