@@ -1,0 +1,6 @@
+connector:
+  name: flatline-connector
+  tags:
+    - tag:k8s
+    - tag:flatline
+  hostname: flatline-connector
