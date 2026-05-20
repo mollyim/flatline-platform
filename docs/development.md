@@ -155,6 +155,8 @@ The component should run on the target CPU family and others that support its fe
 
 ## Deploying to Kubernetes
 
+### With a local registry
+
 Kubernetes expects container images to be served from a container registry.
 
 You can deploy a simple container registry with the [Distribution Registry](https://distribution.github.io/distribution/) container image.
@@ -172,7 +174,7 @@ docker run -d \
 
 When building with Maven, push the resulting container images to a registry. For example:
 
-```bash
+```command
 # Whisper Service
 ( 
   cd flatline-whisper-service && \
@@ -265,6 +267,110 @@ callingServiceBackend:
   image:
     repository: localhost:5000/flatline-calling-service-backend
     tag: dev
+```
+
+Finally, upgrade the Helm release to use these custom image values:
+
+```bash
+helm upgrade -f local.yaml $HELM_RELEASE ./charts/flatline
+```
+
+### Loading local images
+
+Depending on the Kubernetes engine, it may be possible to load container images in archive files,
+and Jib offers a way to build such archive files directly:
+
+```command
+# Whisper Service
+(
+  cd flatline-whisper-service && \
+  ./mvnw -e \
+    deploy \
+    -Pexclude-spam-filter \
+    -Denv=dev \
+    -DskipTests \
+    -Djib.goal=build \
+    -Djib.to.image=localhost/flatline-whisper-service:dev \
+    -Djib.goal=buildTar \
+    -Djib.from.platforms=linux/amd64
+)
+
+# Storage Service
+(
+  cd flatline-storage-service && \
+  ./mvnw -e \
+    clean package \
+    -Pdocker-deploy \
+    -Denv=dev \
+    -DskipTests \
+    -Djib.goal=build \
+    -Djib.to.image=localhost/flatline-storage-service:dev \
+    -Djib.goal=buildTar \
+    -Djib.from.platforms=linux/amd64
+)
+
+# Registration Service
+(
+  cd flatline-registration-service && \
+  ./mvnw -e \
+    clean package \
+    -Denv=dev \
+    -DskipTests \
+    -Djib.goal=build \
+    -Djib.to.image=localhost/flatline-registration-service:dev \
+    -Djib.goal=buildTar \
+    -Djib.from.platforms=linux/amd64
+)
+
+# Contact Discovery Service
+(
+  cd flatline-contact-discovery-service && \
+  ./mvnw -e \
+  deploy \
+  -Dpackaging=docker \
+  -DskipTests \
+  -Djib.to.image=localhost/flatline-contact-discovery-service:dev \
+  -Djib.goal=buildTar \
+  -Djib.from.platforms=linux/amd64
+)
+
+# TODO: Calling service
+```
+
+To load the images with minikube:
+
+```console
+minikube image load flatline-whisper-service/service/target/jib-image.tar
+minikube image load flatline-storage-service/target/jib-image.tar
+minikube image load flatline-registration-service/target/jib-image.tar
+minikube image load flatline-contact-discovery-service/target/jib-image.tar
+```
+
+Once the images are loaded, override the Helm image values to reference these images.
+
+For example, to do this for every core Flatline component, create `local.yaml` with the following:
+
+```yaml
+whisperService:
+  image:
+    repository: localhost/flatline-whisper-service
+    tag: dev
+    pullPolicy: Never
+storageService:
+  image:
+    repository: localhost/flatline-storage-service
+    tag: dev
+    pullPolicy: Never
+registrationService:
+  image:
+    repository: localhost/flatline-registration-service
+    tag: dev
+    pullPolicy: Never
+contactDiscoveryService:
+  image:
+    repository: localhost/flatline-contact-discovery-service
+    tag: dev
+    pullPolicy: Never
 ```
 
 Finally, upgrade the Helm release to use these custom image values:
