@@ -337,13 +337,14 @@ and Jib offers a way to build such archive files directly:
 # TODO: Calling service
 ```
 
-To load the images with minikube:
+To load the images with k3s, you can use `k3s ctr images import archive.tar`,
+with minikube `minikube image load archive.tar`:
 
 ```console
-minikube image load flatline-whisper-service/service/target/jib-image.tar
-minikube image load flatline-storage-service/target/jib-image.tar
-minikube image load flatline-registration-service/target/jib-image.tar
-minikube image load flatline-contact-discovery-service/target/jib-image.tar
+k3s ctr images import flatline-whisper-service/service/target/jib-image.tar
+k3s ctr images import flatline-storage-service/target/jib-image.tar
+k3s ctr images import flatline-registration-service/target/jib-image.tar
+k3s ctr images import flatline-contact-discovery-service/target/jib-image.tar
 ```
 
 Once the images are loaded, override the Helm image values to reference these images.
