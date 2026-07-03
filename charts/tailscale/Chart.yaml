@@ -1,0 +1,7 @@
+apiVersion: v2
+name: flatline-connector
+version: 0.0.1
+
+maintainers:
+  - name: S1m
+    email: 31284753+p1gp1g@users.noreply.github.com

@@ -67,6 +67,8 @@ index 696c269af1..682cb8d725 100644
 
 ## Internal Domain Resolution
 
+### /etc/hosts
+
 Ensure that the client devices are able to resolve the "flatline.internal" hostname, which is configured by default in the Helm chart. To do so when using the Android Emulator, simply add the following entries to the `/etc/hosts` file in the host running both Flatline and the Android Emulator:
 
 ```
@@ -84,6 +86,75 @@ The `10.0.2.2` address allows the emulated devices to [reach the host](https://d
 If Flatline is installed in a different host or physical devices are being used for this evaluation, ensure that client devices are able to resolve those hostnames to an IP address where they can reach Flatline. Ensure that the `global.advertisedAddress` Helm value is [changed](installation.md#customizing-the-installation) to that same IP address so that multimedia calls can work.
 
 If the hostname used for Flatline has been [changed](#changing-hostname) to a publicly registered domain, this step should not be necessary, as long as the DNS servers used by the emulator host or client devices can resolve it to an IP address that clients can reach.
+
+### Tailscale
+
+To access the Flatline server from a mobile, the server must be reachable with the defined domain names.
+
+For that, you can use Tailscale to make Flatline accessible to your mobile device and provide internal domain resolution in the same time.
+
+You need:
+- The device hosting the Flatline cluster and the testing device(s) to be in the same Tailscale network
+- Set the device hosting the Flatline cluster's /etc/hosts to the traefik pod's IP, or the host tailscal IP address
+
+*/etc/hosts*
+
+```
+# Flatline
+#
+10.244.0.2 flatline.internal
+10.244.0.2 whisper.flatline.internal
+10.244.0.2 storage.flatline.internal
+10.244.0.2 sfu.flatline.internal
+10.244.0.2 cdn0.flatline.internal
+10.244.0.2 cdn3.flatline.internal
+10.244.0.2 turn.flatline.internal
+```
+
+- On the Tailscale administration console:
+    - Create tags for the Tailscale's Kubernetes operator, and the connector (Access controls > Tags):
+        - `k8s-operator`, without tag owner
+        - `k8s`, owned by `tag:k8s-operator`
+        - `flatline`, owned by `tag:k8s-operator`
+    - [Set up an app connector](https://Tailscale.com/docs/features/app-connectors/how-to/setup) (Apps > Add an app):
+        - Name: `flatline`
+        - Target: Custom
+        - Domains: `flatline.internal, *.flatline.internal`
+        - ACL tags: `tag:flatline`
+    - [Set up an OAuth client](https://Tailscale.com/docs/features/oauth-clients#setting-up-an-oauth-client) (Settings > Trust credentials > Add credential)
+        - Description: Flatline
+        - Scopes: `Devices Core`, `Auth Keys`, `Services` write scopes with the tag `tag:k8s-operator`
+        - And store securely the *Client ID* and the *Client secret*
+- Add Tailscale helmcharts
+
+```console
+helm repo add Tailscale https://pkgs.Tailscale.com/helmcharts
+helm repo update
+```
+- Install the Tailscale Kubernetes Operator:
+
+```console
+helm upgrade \
+  --install \
+  Tailscale-operator \
+  Tailscale/Tailscale-operator \
+  --namespace=Tailscale \
+  --create-namespace \
+  --set-string oauth.clientId="<OAauth client ID>" \
+  --set-string oauth.clientSecret="<OAuth client secret>" \
+  --wait
+```
+- Deploy the Tailscale App Connector
+
+```console
+helm install flatline-connector charts/Tailscale/
+```
+
+You can then access the flatline server from your mobile phone, connected to the Tailscale net. The mobile app setting to *use Tailscale DNS* must be enabled.
+
+Resources:
+- <https://Tailscale.com/docs/features/kubernetes-operator#prerequisites>
+- <https://Tailscale.com/docs/features/app-connectors/how-to/setup>
 
 ## Creating Accounts
 

@@ -1,0 +1,11 @@
+apiVersion: tailscale.com/v1alpha1
+kind: Connector
+metadata:
+  name: {{ .Values.connector.name | default "flatline-connector" }}
+spec:
+  tags:
+{{- range .Values.connector.tags }}
+    - {{ . | quote }}
+{{- end }}
+  hostname: {{ .Values.connector.hostname | quote }}
+  appConnector: {}
