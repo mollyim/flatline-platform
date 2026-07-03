@@ -89,10 +89,10 @@ spec:
     {{- end }}
   tls:
     secretName: {{ $ctx.componentValues.tls.secretName | default (include "common.fullnameWithComponent" $ctx) }}
+    {{- if $ctx.componentValues.tls.optionsName }}
     options:
-      {{- if $ctx.componentValues.tls.optionsName }}
       name: {{ $ctx.componentValues.tls.optionsName }}
-      {{- end }}
+    {{- end }}
 
 ---
 

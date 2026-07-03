@@ -535,6 +535,12 @@ noiseTunnel:
   noiseStaticPrivateKey: secret://noiseTunnel.noiseStaticPrivateKey
   recognizedProxySecret: secret://noiseTunnel.recognizedProxySecret
 
+webPush:
+  # vapidSub can be an https:// url or a mailto: url
+  # vapidSub: mailto:contact@example.com
+  vapidSub: https://github.com/mollyim/flatline-platform/issues
+  vapidStaticPrivateKey: secret://webPush.vapidStaticPrivateKey
+
 externalRequestFilter:
   grpcMethods:
     - com.example.grpc.ExampleService/exampleMethod
