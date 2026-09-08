@@ -1,6 +1,6 @@
 # Flatline Prototype Compromises
 
-This document lists a series of know compromises made for the Flatline prototype. These compromises were made for the sake of keeping the scope of the prototype contained and to reduce the complexity of working in the development and testing of the prototype. This list aims to identify them so that they can be addressed after the protoype stage is completed.
+This document lists a series of known compromises made for the Flatline prototype. These compromises were made for the sake of keeping the scope of the prototype contained and to reduce the complexity of working in the development and testing of the prototype. This list aims to identify them so that they can be addressed after the prototype stage is completed.
 
 This list is not exhaustive and compromises may be added or removed as development of the prototype evolves.
 
@@ -26,7 +26,7 @@ Networking for the prototype is very rudimentary. Kubernetes pods that require h
 
 ### Hardening
 
-The Kubernetes resources installed by the Helm chart have not been hardened. I addition to the [lack of network security](#networking), pod security standards are not enforced nor observed, container capabilities are not restricted and security features such as user namespaces and security context options are not configured. In the future, Kubernetes resources should be hardened to reduce the likelyhood and impact of a security incident.
+The Kubernetes resources installed by the Helm chart have not been hardened. In addition to the [lack of network security](#networking), pod security standards are not enforced nor observed, container capabilities are not restricted and security features such as user namespaces and security context options are not configured. In the future, Kubernetes resources should be hardened to reduce the likelihood and impact of a security incident.
 
 ### Registration
 
@@ -44,7 +44,7 @@ See the [Key Transparency Server & Auditor](architecture.md#key-transparency-ser
 
 ### Testing
 
-When some functionality has been disabled or changed, tests for that functionality have ocassionally been disabled, rather than updated to reflect the new expected behavior for Flatline. In the future, existing tests should be rewritten and new tests created for any changed or new functionality.
+When some functionality has been disabled or changed, tests for that functionality have occasionally been disabled, rather than updated to reflect the new expected behavior for Flatline. In the future, existing tests should be rewritten and new tests created for any changed or new functionality.
 
 Additionally, Flatline does not yet implement end-to-end testing.
 

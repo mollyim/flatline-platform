@@ -14,7 +14,7 @@ git clone --recurse-submodules git@github.com:mollyim/flatline-platform.git
 
 Testing and building this project relies on [Docker](https://docs.docker.com/engine/install/).
 
-The Java compoments are intended to be built with the [Temurin 24 JDK](https://adoptium.net/installation/).
+The Java components are intended to be built with the [Temurin 24 JDK](https://adoptium.net/installation/).
 
 For the Maven builds to succeed, ensure that `JAVA_HOME` points to a valid Temurin 24 JDK installation.
 
@@ -35,7 +35,7 @@ cd flatline-whisper-service
 
 Integration tests are excluded as they require an existing environment in which to run.
 
-Tests for features that are disabled for the prototype are be excluded.
+Tests for features that are disabled for the prototype are excluded.
 
 ### Storage Service
 
